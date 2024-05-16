@@ -9,7 +9,20 @@
 	export let doRedraw;
 	export let doRelayout;
 	export let maximumDepth: number;
-	let colorSchemeSettings: string;
+	let colorSchemeSettings: string | undefined;
+	let invertColorScheme: boolean;
+
+	function reloadColorScheme(_: any) {
+		if (colorSchemeSettings) {
+			const {nodeColors, nodeDefaultColor} = getNodeColors(
+				maximumDepth,
+				colorSchemeSettings,
+				invertColorScheme,
+			);
+			(drawSettings.nodeColors = nodeColors), maximumDepth;
+			drawSettings.nodeDefaultColor = nodeDefaultColor;
+		}
+	}
 
 	// layout options
 	let options: LayoutOptions[] = ['layerTree', 'straightTree', 'circular'];
@@ -143,22 +156,17 @@
 	<!-- Auto-node colors-->
 	<div>
 		<Heading headingNumber={5}>Use node colorscheme</Heading>
-		<select
-			bind:value={colorSchemeSettings}
-			on:change={e => {
-				if (colorSchemeSettings) {
-					const {nodeColors, nodeDefaultColor} = getNodeColors(maximumDepth, colorSchemeSettings);
-					(drawSettings.nodeColors = nodeColors), maximumDepth;
-					drawSettings.nodeDefaultColor = nodeDefaultColor;
-				}
-			}}
-		>
-			<option value={undefined}>No default scheme</option>
+		<select bind:value={colorSchemeSettings} on:change={reloadColorScheme}>
+			<option value={undefined}>Custom color scheme</option>
 			{#each colorPallets as value}
 				<option {value}>{value}</option>
 			{/each}
-		</select>
+		</select><br />
+		Invert:
+		<input type="checkbox" bind:checked={invertColorScheme} on:change={reloadColorScheme} />
 	</div>
+
+	<div class="h-8" />
 
 	<!-- default node color -->
 	<div>
@@ -169,6 +177,7 @@
 			onChange={e => {
 				drawSettings.nodeDefaultColor = e.currentTarget.value;
 				doRedraw = true;
+				colorSchemeSettings = undefined;
 			}}
 		/>
 	</div>
@@ -184,6 +193,7 @@
 					onChange={e => {
 						drawSettings.nodeColors[index] = e.currentTarget.value;
 						doRedraw = true;
+						colorSchemeSettings = undefined;
 					}}
 				/>
 				<!-- remove level -->
@@ -191,8 +201,8 @@
 					onClick={() => {
 						drawSettings.nodeColors.splice(index, 1);
 						doRedraw = true;
-						// Trigger rerender
 						drawSettings.nodeColors = drawSettings.nodeColors;
+						colorSchemeSettings = undefined;
 					}}
 				>
 					Remove this level
@@ -204,8 +214,8 @@
 			onClick={() => {
 				drawSettings.nodeColors.push('#000000');
 				doRedraw = true;
-				// Trigger rerender
 				drawSettings.nodeColors = drawSettings.nodeColors;
+				colorSchemeSettings = undefined;
 			}}
 		>
 			Add new level

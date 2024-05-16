@@ -8,7 +8,7 @@ function invertHex(hex: string) {
 }
 
 /** Generates a node color pallet for DrawSettings, given the amount of layers */
-export function getNodeColors(nrNodes: number, colorScheme: string) {
+export function getNodeColors(nrNodes: number, colorScheme: string, inverted = false) {
 	if (!colorPallets.includes(colorScheme)) {
 		throw new Error(
 			`Invalid colorscheme passed to getColors: ${colorScheme} passed in, known schemes are ${colorPallets}`,
@@ -19,16 +19,18 @@ export function getNodeColors(nrNodes: number, colorScheme: string) {
 	const nodeColors = distributedCopy(
 		colourMap({
 			colormap: colorScheme,
-			nshades: Math.max(nrNodes, minimumSize),
+			nshades: Math.max(nrNodes + 1, minimumSize),
 			format: 'hex',
 			alpha: 1,
 		}),
-		minimumSize,
+		nrNodes + 1,
 	);
-	console.log(colorMapPallets);
+
+	if (inverted) {
+		nodeColors.reverse();
+	}
 
 	const nodeDefaultColor = invertHex(nodeColors[Math.floor(nodeColors.length / 2)]);
-	console.log(nodeColors[Math.floor(nodeColors.length / 2)], nodeDefaultColor);
 
 	return {
 		nodeColors,
