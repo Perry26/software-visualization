@@ -9,15 +9,15 @@
 	export let doRedraw;
 	export let doRelayout;
 	export let maximumDepth: number;
-	let colorSchemeSettings: string | undefined;
-	let invertColorScheme: boolean;
+	let colorScheme: string | undefined;
+	let colorSchemeSettings = {inverted: false, increaseBrightness: false, increaseSaturation: false};
 
 	function reloadColorScheme(_: any) {
-		if (colorSchemeSettings) {
+		if (colorScheme) {
 			const {nodeColors, nodeDefaultColor} = getNodeColors(
 				maximumDepth,
+				colorScheme,
 				colorSchemeSettings,
-				invertColorScheme,
 			);
 			(drawSettings.nodeColors = nodeColors), maximumDepth;
 			drawSettings.nodeDefaultColor = nodeDefaultColor;
@@ -156,14 +156,29 @@
 	<!-- Auto-node colors-->
 	<div>
 		<Heading headingNumber={5}>Use node colorscheme</Heading>
-		<select bind:value={colorSchemeSettings} on:change={reloadColorScheme}>
+		<select bind:value={colorScheme} on:change={reloadColorScheme}>
 			<option value={undefined}>Custom color scheme</option>
 			{#each colorPallets as value}
 				<option {value}>{value}</option>
 			{/each}
 		</select><br />
-		Invert:
-		<input type="checkbox" bind:checked={invertColorScheme} on:change={reloadColorScheme} />
+		<input
+			type="checkbox"
+			bind:checked={colorSchemeSettings.inverted}
+			on:change={reloadColorScheme}
+		/>
+		Invert <br />
+		<input
+			type="checkbox"
+			bind:checked={colorSchemeSettings.increaseBrightness}
+			on:change={reloadColorScheme}
+		/>
+		Force decreasing brightness <br />
+		<input
+			type="checkbox"
+			bind:checked={colorSchemeSettings.increaseSaturation}
+			on:change={reloadColorScheme}
+		/> Force decreasing saturation
 	</div>
 
 	<div class="h-8" />
@@ -177,7 +192,7 @@
 			onChange={e => {
 				drawSettings.nodeDefaultColor = e.currentTarget.value;
 				doRedraw = true;
-				colorSchemeSettings = undefined;
+				colorScheme = undefined;
 			}}
 		/>
 	</div>
@@ -193,7 +208,7 @@
 					onChange={e => {
 						drawSettings.nodeColors[index] = e.currentTarget.value;
 						doRedraw = true;
-						colorSchemeSettings = undefined;
+						colorScheme = undefined;
 					}}
 				/>
 				<!-- remove level -->
@@ -202,7 +217,7 @@
 						drawSettings.nodeColors.splice(index, 1);
 						doRedraw = true;
 						drawSettings.nodeColors = drawSettings.nodeColors;
-						colorSchemeSettings = undefined;
+						colorScheme = undefined;
 					}}
 				>
 					Remove this level
@@ -215,7 +230,7 @@
 				drawSettings.nodeColors.push('#000000');
 				doRedraw = true;
 				drawSettings.nodeColors = drawSettings.nodeColors;
-				colorSchemeSettings = undefined;
+				colorScheme = undefined;
 			}}
 		>
 			Add new level
