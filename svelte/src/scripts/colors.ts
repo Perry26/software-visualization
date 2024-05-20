@@ -1,4 +1,4 @@
-import {distributedCopy} from '$helper';
+import {clamp, distributedCopy} from '$helper';
 import colourMap from 'colormap';
 //@ts-ignore
 import * as colorMapPallets from 'colormap/colorScale.js';
@@ -52,6 +52,9 @@ export function getNodeColors(
 	let minS = Infinity;
 	const colors = hexColors.map((hex, i) => {
 		const c = new Color(hex);
+		c.hsl.l = clamp(c.hsl.l, 20, 70);
+		c.hsl.s = clamp(c.hsl.s, 20, 60);
+
 		if (colorSchemeSettings.increaseBrightness) {
 			c.hsl.l = minL = Math.min(minL, c.hsl.l) - i / c.hsl.l;
 		}

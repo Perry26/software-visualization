@@ -10,7 +10,7 @@
 	export let doRelayout;
 	export let maximumDepth: number;
 	let colorScheme: string | undefined;
-	let colorSchemeSettings = {inverted: false, increaseBrightness: false, increaseSaturation: false};
+	let colorSchemeSettings = {inverted: true, increaseBrightness: true, increaseSaturation: true};
 
 	function reloadColorScheme(_: any) {
 		if (colorScheme) {
