@@ -81,8 +81,7 @@ export function draw(
 		);
 	}
 
-	// Render links
-
+	// Setup link canvas
 	const linkCanvas = d3.select(canvasElement).append('g').attr('id', 'link-canvas');
 	setupGradient(linkCanvas);
 

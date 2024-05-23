@@ -20,6 +20,8 @@
 	import RawDataInputer from './components/raw-data-inputer.svelte';
 	import ConfigChanger from './components/config-changer.svelte';
 	import DrawSettingsChanger from './components/draw-settings-changer.svelte';
+	import EvaluationButton from './components/evaluator-button.svelte';
+	import {LayoutMetrics} from '$scripts/draw/metrics';
 
 	let redrawFunction = (_: DrawSettingsInterface) => {};
 	let rawData: RawInputType;
@@ -55,6 +57,7 @@
 	};
 
 	let svgElement: SVGElement | undefined = undefined;
+	let evaluator: LayoutMetrics = new LayoutMetrics();
 
 	let doReconvert = true;
 	let doRefilter = true;
@@ -93,6 +96,7 @@
 		// on finish
 		doRefilter = true;
 	}
+
 	$: {
 		if (isMounted) {
 			// handle config changes
@@ -109,6 +113,8 @@
 
 				doReconvert = false;
 				doRefilter = true;
+
+				evaluator.setData(graphData);
 			}
 			if (doRefilter) {
 				filter(config, graphData);
@@ -157,5 +163,7 @@
 		<ConfigChanger bind:config bind:doRefilter bind:flattenNodes />
 		<div class="bg-neutral-300 h-[1px]" />
 		<DrawSettingsChanger bind:drawSettings bind:doRedraw bind:doRelayout bind:maximumDepth />
+		<div class="bg-neutral-300 h-[1px]" />
+		<EvaluationButton bind:evaluator />
 	</div>
 </div>

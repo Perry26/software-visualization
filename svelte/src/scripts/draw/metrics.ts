@@ -1,7 +1,18 @@
-import type {GraphData, GraphDataEdge, GraphDataEdgeAfterLayout, GraphDataNode} from '$types';
-import * as d3 from 'd3';
-//@ts-expect-error Can'f find definitions for this
-import {ShapeInfo, Intersection} from 'kld-intersections';
+import {getNode} from '$helper/graphdata-helpers';
+import type {GraphData, GraphDataEdge, GraphDataNode} from '$types';
+import {
+	Point,
+	Vector,
+	Circle,
+	Line,
+	Ray,
+	Segment,
+	Arc,
+	Box,
+	Polygon,
+	Matrix,
+	PlanarSet,
+} from '@flatten-js/core';
 
 function isAncestor(node: GraphDataNode, presumedParent: GraphDataNode) {
 	if (node.id === presumedParent.id) {
@@ -13,6 +24,7 @@ function isAncestor(node: GraphDataNode, presumedParent: GraphDataNode) {
 	}
 }
 
+/** Get the absolute x and y coordinates position of the given node */
 function getAbsPosition(node: GraphDataNode): {x: number; y: number} {
 	if (node.parent) {
 		const {x, y} = getAbsPosition(node.parent);
@@ -21,83 +33,131 @@ function getAbsPosition(node: GraphDataNode): {x: number; y: number} {
 			y: node.y! + y,
 		};
 	} else {
-		return {x: 0, y: 0};
+		return {x: node.x ?? 0, y: node.y ?? 0};
 	}
 }
 
-export function runMetrics() {
-	// Get elements from canvas
-	const pathSelection = d3.select('svg #canvas').selectAll('path') as d3.Selection<
-		SVGPathElement,
-		GraphDataEdgeAfterLayout,
-		HTMLElement,
-		unknown
-	>;
-	const nodeSelection = d3.select('svg #canvas').selectAll('.nodes > rect') as d3.Selection<
-		SVGCircleElement,
-		GraphDataNode,
-		HTMLElement,
-		unknown
-	>;
+export class LayoutMetrics {
+	data?: GraphData;
 
-	// Get line intersections
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	const linePairs: any[] = [];
-	pathSelection.each(function (_, i) {
-		const p1 = ShapeInfo.path(this.getAttribute('d'));
-		pathSelection.each(function (_, j) {
-			if (i < j) {
-				const p2 = ShapeInfo.path(this.getAttribute('d'));
-				const intersect = Intersection.intersect(p1, p2);
-				linePairs.push(intersect);
+	setData(d: GraphData) {
+		this.data = d;
+	}
+
+	/** Set the latest graphData rendered, so it is accessible from this file */
+	run() {
+		if (!this.data) {
+			console.error('No GraphData found!');
+			return 'Error: no data found!';
+		}
+
+		// Prepare data
+		// Line segments
+		const segments = this.data.links.flatMap(l => {
+			const res: {segment: Segment; edge: GraphDataEdge}[] = [];
+			for (let i = 0; i < l.renderPoints!.length - 1; i++) {
+				const p1 = new Point(l.renderPoints![i].x, l.renderPoints![i].y);
+				const p2 = new Point(l.renderPoints![i + 1].x, l.renderPoints![i + 1].y);
+				const segment = new Segment(p1, p2);
+				res.push({segment, edge: l});
 			}
+			return res;
 		});
-	});
-	const lineIntersections = linePairs.filter(i => i.status !== 'No Intersection');
 
-	// Get line-node intersections
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	const lineRectPairs: any[] = [];
-	pathSelection.each(function (line) {
-		const lineShape = ShapeInfo.path(this.getAttribute('d'));
-		nodeSelection.each(function (node) {
-			if (isAncestor(line.target, node) || isAncestor(line.source, node)) {
-				undefined;
-			} else {
+		// Segment length
+		const averageSegment =
+			segments.reduce((acc, value) => acc + value.segment.length, 0) / segments.length;
+		const averageSegmentDifference =
+			segments
+				.map(s => Math.abs(s.segment.length - averageSegment))
+				.reduce((acc, value) => acc + value, 0) / segments.length;
+
+		// Calculate intersections
+		// Line segments
+		let lineLineIntersectCount = 0;
+		let fullLineOverlapping = 0; // Chances of this going up are extremely slim
+		for (let i = 0; i < segments.length; i++) {
+			for (let j = i + 1; j < segments.length; j++) {
+				const intersect = segments[i].segment.intersect(segments[j].segment);
+				if (intersect.length > 0) {
+					lineLineIntersectCount++;
+				}
+				if (intersect.length > 1) {
+					fullLineOverlapping++;
+				}
+			}
+		}
+
+		// Rectangle overlap
+		let rectangleOverlappingCount = 0;
+		function rec(nodes: GraphDataNode[]): {box: Box; node: GraphDataNode}[] {
+			const boxes = nodes.map(node => {
 				const {x, y} = getAbsPosition(node);
-				const rectShape = ShapeInfo.rectangle({
-					top: y,
-					left: x,
-					width: this.getAttribute('width'),
-					height: this.getAttribute('height'),
-				});
-				lineRectPairs.push(Intersection.intersect(lineShape, rectShape));
+				const box = new Box(
+					x - 0.5 * node.width!,
+					y - 0.5 * node.height!,
+					x + 0.5 * node.width!,
+					y + 0.5 * node.height!,
+				);
+				return {box, node};
+			});
+
+			for (let i = 0; i < boxes.length; i++) {
+				for (let j = i + 1; j < boxes.length; j++) {
+					const intersect = boxes[i].box.intersect(boxes[j].box);
+					if (intersect) {
+						rectangleOverlappingCount++;
+					}
+				}
 			}
+
+			return [...boxes, ...nodes.flatMap(n => rec(n.members))];
+		}
+
+		const boxes = rec(this.data.nodes);
+
+		// Lines overlapping with unrelated node
+		let lineRectangleIntersectionCount = 0;
+		segments.map(({segment, edge}) => {
+			boxes.forEach(({box, node}) => {
+				const source = getNode(edge.source, this.data!.nodesDict);
+				const target = getNode(edge.target, this.data!.nodesDict);
+				if (!(isAncestor(source, node) || isAncestor(target, node))) {
+					const intersections = segment.intersect(box);
+					if (intersections.length > 0) {
+						lineRectangleIntersectionCount++;
+					}
+				}
+			});
 		});
-	});
-	const lineRectIntersections = lineRectPairs.filter(i => i.status !== 'No Intersection');
 
-	// Get the average line length and the average deviation of this length
-	const amountOfPaths = pathSelection.size();
-	let totalLength = 0;
-	pathSelection.each(function () {
-		totalLength += this.getTotalLength();
-	});
-	const averageLength = totalLength / amountOfPaths;
+		// Area metrics:
+		const minX = this.data.nodes.reduce(
+			(acc, node) => Math.min(node.x! - 0.5 * node.width!, acc),
+			Infinity,
+		);
+		const minY = this.data.nodes.reduce(
+			(acc, node) => Math.min(node.y! - 0.5 * node.height!, acc),
+			Infinity,
+		);
+		const maxX = this.data.nodes.reduce(
+			(acc, node) => Math.min(node.x! + 0.5 * node.width!, acc),
+			Infinity,
+		);
+		const maxY = this.data.nodes.reduce(
+			(acc, node) => Math.min(node.y! + 0.5 * node.height!, acc),
+			Infinity,
+		);
 
-	let totalDeviation = 0;
-	pathSelection.each(function () {
-		totalDeviation += Math.abs(this.getTotalLength() - averageLength);
-	});
-	const averageDeviation = totalDeviation / amountOfPaths;
+		const area = Math.abs(maxX - minX) * Math.abs(maxY - minY);
 
-	console.log(
-		`Layout metrics \n
-		There are ${amountOfPaths} lines.
-		Lines deviate ${averageDeviation} on average (total ${totalDeviation})
-		Lines are on average ${averageLength} long (total ${totalLength})
-		Amount of line crossings:  ${lineIntersections.length}
-		Amount of crossings between lines and unrelated nodes: ${lineRectIntersections.length}
-		`,
-	);
+		// Return results
+		return `There are ${lineLineIntersectCount} line intersections. ${
+			fullLineOverlapping ? fullLineOverlapping + ' \nlines are fully overlapping.' : ''
+		}
+		Line segments deviate ${averageSegmentDifference} from the average
+		There are ${rectangleOverlappingCount} nodes overlapping
+		${lineRectangleIntersectionCount} lines are overlapping an unrelated node
+		The area of the drawing is ${area}`;
+	}
 }

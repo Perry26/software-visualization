@@ -125,11 +125,9 @@ export interface GraphDataEdge {
 	/** Used for (temporarily) storing the direction of the rendering coordinates during edge rendering */
 	gradientDirection?: boolean;
 	labelCoordinates?: {x: number; y: number}[];
-}
 
-export interface GraphDataEdgeAfterLayout extends GraphDataEdge {
-	source: GraphDataNode;
-	target: GraphDataNode;
+	/** Set during rendering to remember */
+	renderPoints?: {x: number; y: number}[];
 }
 
 /** Routing information for edges.

@@ -100,6 +100,7 @@ export function renderLinks(
 		if (coordinates.length < 2) {
 			coordinates = [source, target];
 		}
+		l.renderPoints = coordinates;
 
 		l.labelCoordinates = [coordinates[0], coordinates[1]];
 
@@ -145,6 +146,7 @@ export function renderLinks(
 
 		l.gradientDirection = s.x! > t.x!;
 		l.labelCoordinates = [s, t];
+		l.renderPoints = [s, t];
 
 		return `M ${s.x} ${s.y} L ${t.x} ${t.y} `;
 	}

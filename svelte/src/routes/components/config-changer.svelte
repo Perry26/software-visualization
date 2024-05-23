@@ -2,7 +2,6 @@
 	import Heading from '$ui/heading.svelte';
 	import Toggle from '$ui/toggle.svelte';
 	import type {ConfigInterface, GraphDataNode} from '$types';
-	import {runMetrics} from '$scripts/draw/metrics';
 
 	export let config: ConfigInterface;
 	export let doRefilter: boolean;
@@ -67,14 +66,5 @@
 		>
 			Hide edges crossing levels
 		</Toggle>
-		<br />
-		<input
-			type="button"
-			on:click={_ => {
-				runMetrics();
-			}}
-			value="Evaluate layout"
-			style="background: #e5e7eb; padding: 5px; border-radius: 3px; margin-bottom: 5px; border: 1px solid gray;"
-		/>
 	</div>
 </div>
