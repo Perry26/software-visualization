@@ -1,17 +1,34 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import * as d3 from 'd3';
-import {EdgeType, type DrawSettingsInterface, type GraphDataEdge, type GraphDataNode} from '$types';
+import {
+	EdgeType,
+	type DrawSettingsInterface,
+	type GraphDataEdge,
+	type GraphDataNode,
+	type LayoutNestingLevels,
+} from '$types';
 import {notNaN} from '$helper';
 
 type GraphDataNodeExt = GraphDataNode & {width: number; height: number};
 type TreeNode = GraphDataNodeExt & {next: TreeNode[]};
 export type NodeLayout = (
-	drawSettings: DrawSettingsInterface,
+	drawSettings: LayoutDrawSettingsInterface,
 	childNodes: GraphDataNode[],
 	parentNode?: GraphDataNode,
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	options?: any,
 ) => void;
+
+export interface LayoutDrawSettingsInterface extends Omit<DrawSettingsInterface, 'nodeMargin'> {
+	nodeMargin: number;
+}
+
+export function getDrawSettingsForLayout(
+	settings: DrawSettingsInterface,
+	layoutType: LayoutNestingLevels,
+): LayoutDrawSettingsInterface {
+	return {...settings, nodeMargin: settings.nodeMargin[layoutType]};
+}
 
 const filterEdges = (l: GraphDataEdge) => {
 	return l.type === EdgeType.constructs || l.type === EdgeType.holds;
@@ -52,38 +69,40 @@ function checkWidthHeight(nodes: GraphDataNode[]): GraphDataNodeExt[] {
  * Circular layout
  *
  * Assumes all nodes already have a width and height assigned
- * Only works on leaf nodes!
  */
 export const circularLayout: NodeLayout = function (drawSettings, childNodes, parentNode?) {
 	const nodes = checkWidthHeight(childNodes);
 
 	const circumference = nodes.reduce((acc, n) => {
-		const thisNode = Math.sqrt(n.width ** 2 + n.height ** 2) + drawSettings.nodePadding;
+		const thisNode = Math.sqrt(n.width ** 2 + n.height ** 2) + drawSettings.nodeMargin;
 		return acc + thisNode;
 	}, 0);
 
 	const radius = circumference / (2 * Math.PI) + 20;
-	const deltaAngle = (2 * Math.PI) / nodes.length;
 
 	let maxX = 0.5 * notNaN(drawSettings.minimumNodeSize),
-		maxY = 0.5 * notNaN(drawSettings.minimumNodeSize),
-		minX = -0.5 * notNaN(drawSettings.minimumNodeSize),
-		minY = -0.5 * notNaN(drawSettings.minimumNodeSize);
+		maxY = 0.5 * notNaN(drawSettings.minimumNodeSize);
+
+	//
+	//const totalNodesRec = nodes.reduce((acc, n) => acc + n.members.length + 1, 0);
+	let i = 0;
+	const deltaAngle = (2 * Math.PI) / circumference;
 
 	// Assign actual coordinates
-	nodes.forEach((n, i) => {
+	nodes.forEach(n => {
+		const hypotenuse = Math.sqrt(n.width ** 2 + n.height ** 2);
+		i += 0.5 * (hypotenuse + drawSettings.nodeMargin);
 		const angle = deltaAngle * i;
+		i += 0.5 * (hypotenuse + drawSettings.nodeMargin);
 		n.x = notNaN(Math.sin(angle) * radius);
 		n.y = notNaN(Math.cos(angle) * radius);
-		maxX = Math.max(maxX, n.x + 0.5 * n.width);
-		maxY = Math.max(maxY, n.y + 0.5 * n.height);
-		minX = Math.min(minX, n.x - 0.5 * n.width);
-		minY = Math.min(minY, n.y - 0.5 * n.height);
+		maxX = Math.max(maxX, Math.abs(n.x + 0.5 * n.width), Math.abs(n.x - 0.5 * n.width));
+		maxY = Math.max(maxY, Math.abs(n.y + 0.5 * n.height), Math.abs(n.y - 0.5 * n.height));
 	});
 
 	if (parentNode) {
-		parentNode.width = notNaN(Math.abs(maxX) + Math.abs(minX) + 6 * drawSettings.nodePadding); // TODO why 6?
-		parentNode.height = notNaN(Math.abs(maxY) + Math.abs(minY) + 6 * drawSettings.nodePadding);
+		parentNode.width = notNaN(2 * maxX + 2 * drawSettings.nodePadding);
+		parentNode.height = notNaN(2 * maxY + 2 * drawSettings.nodePadding);
 	}
 };
 
@@ -133,8 +152,8 @@ export const forceBasedLayout: NodeLayout = function (drawSettings, childNodes, 
 				...childNodes.map(node => Math.abs(node.y!) + 0.5 * node.height!),
 			) +
 				drawSettings.nodePadding);
-		parentNode.width = notNaN(width);
-		parentNode.height = notNaN(height);
+		parentNode.width = notNaN(width) + 2 * drawSettings.nodePadding;
+		parentNode.height = notNaN(height) + 2 * drawSettings.nodePadding;
 	}
 };
 
@@ -220,7 +239,7 @@ export const straightTreeLayout: NodeLayout = function (
 
 	const {nodes, rootNode} = discoverTree(childNodes);
 
-	// Make add nodes the same size (as intended for the algorithm)
+	// Make all nodes the same size (as intended for the algorithm)
 	if (!options?.uniformSize) {
 		const width = Math.max(...nodes.map(n => n.width), drawSettings.minimumNodeSize);
 		const height = Math.max(...nodes.map(n => n.height), drawSettings.minimumNodeSize);
@@ -232,8 +251,8 @@ export const straightTreeLayout: NodeLayout = function (
 
 	// Make sure all nodes have their top left coordinate at the same spot, namely the center of the parentnode
 	nodes.forEach(n => {
-		n.x = 0.5 * n.width + drawSettings.nodePadding;
-		n.y = 0.5 * n.height + drawSettings.nodePadding;
+		n.x = 0.5 * n.width + drawSettings.nodeMargin;
+		n.y = 0.5 * n.height + drawSettings.nodeMargin;
 	});
 
 	/** Actually layout the nodes, recursively */
@@ -269,14 +288,14 @@ export const straightTreeLayout: NodeLayout = function (
 		}
 
 		// Layout 0 (the smallest layout) should go to the bottom
-		let currentHeight = node.height + drawSettings.nodePadding;
+		let currentHeight = node.height + drawSettings.nodeMargin;
 		verticalLayout.nodes.forEach(n => {
 			n.y! += currentHeight;
 		});
 		currentHeight += verticalLayout.height;
 
 		// Layouts 1-n should go to the right
-		let currentWidth = Math.max(verticalLayout.width, node.width) + drawSettings.nodePadding;
+		let currentWidth = Math.max(verticalLayout.width, node.width) + drawSettings.nodeMargin;
 		horizontalLayout.reverse().forEach(layout => {
 			layout.nodes.forEach(n => {
 				n.x = (n.x ?? 0) + currentWidth;
@@ -315,8 +334,8 @@ function centerize(nodes: GraphDataNode[], edges?: GraphDataEdge[]) {
 	const maxX = nodes.reduce((acc, n) => Math.max(acc, n.x! + 0.5 * n.width!), -Infinity);
 	const maxY = nodes.reduce((acc, n) => Math.max(acc, n.y! + 0.5 * n.height!), -Infinity);
 
-	const centerX = (maxX - minX) / 2;
-	const centerY = (maxY - minY) / 2;
+	const centerX = (maxX + minX) / 2;
+	const centerY = (maxY + minY) / 2;
 
 	nodes.forEach(n => {
 		n.x! -= centerX;
@@ -542,9 +561,9 @@ export const layerTreeLayout: NodeLayout = function (
 		layer.forEach(node => {
 			node.y = currentHeight + 0.5 * node.height;
 			node.x = currentWidth + 0.5 * node.width;
-			currentWidth += node.width + drawSettings.nodePadding;
+			currentWidth += node.width + drawSettings.nodeMargin;
 		});
-		currentHeight += layer[0]?.height + drawSettings.nodePadding;
+		currentHeight += layer[0]?.height + drawSettings.nodeMargin;
 	});
 
 	// Finally: edge routing
@@ -557,6 +576,7 @@ export const layerTreeLayout: NodeLayout = function (
 				e.original.routing[e.inverted ? 'push' : 'unshift']({
 					x: notNaN(target.x),
 					y: notNaN(target.y),
+					//@ts-ignore
 					origin: parentNode,
 				});
 			}

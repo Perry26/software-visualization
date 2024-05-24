@@ -10,11 +10,19 @@ export interface ConfigInterface {
 	hideHierarchicalEdges?: number;
 }
 
-export interface DrawSettingsInterface {
+/** Just to guarantee that the types DrawSettingsInterface and LayoutNestingLevels cannot get 'out of sync' */
+interface drawSettingsInterfaceDummy {
+	nodeMargin: {[id in LayoutNestingLevels]: number};
+}
+
+export interface DrawSettingsInterface extends drawSettingsInterfaceDummy {
 	minimumNodeSize: number;
 	buttonRadius: number;
 	nodeCornerRadius: number;
+	/** Distance between edge of node and inner layout */
 	nodePadding: number;
+	/** Distance between nodes as positioned by layout. Differs per level */
+	nodeMargin: {inner: number; intermediate: number; root: number};
 	textSize: number;
 	shownEdgesType: Map<EdgeType, boolean>;
 	showNodeLabels: boolean;
@@ -36,6 +44,8 @@ export interface RawDataConfigType {
 }
 
 export type LayoutOptions = 'layerTree' | 'circular' | 'straightTree';
+
+export type LayoutNestingLevels = 'inner' | 'intermediate' | 'root';
 
 export interface SimpleNode {
 	id: string;

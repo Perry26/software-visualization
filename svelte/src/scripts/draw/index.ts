@@ -15,6 +15,7 @@ import {
 	straightTreeLayout,
 	layerTreeLayout,
 	type NodeLayout,
+	getDrawSettingsForLayout,
 } from './layouts';
 import {renderLinks} from './link-render';
 import {addDragAndDrop} from './drag-and-drop';
@@ -50,15 +51,30 @@ export function draw(
 	};
 	// Calculate layouts for non-simple nodes
 	innerNodes.forEach(n =>
-		layoutOptionToFunction[drawSettings.innerLayout](drawSettings, n.members, n),
+		layoutOptionToFunction[drawSettings.innerLayout](
+			getDrawSettingsForLayout(drawSettings, 'inner'),
+			n.members,
+			n,
+		),
 	);
 	intermediateNodes.forEach(n =>
-		layoutOptionToFunction[drawSettings.intermediateLayout](drawSettings, n.members, n),
+		layoutOptionToFunction[drawSettings.intermediateLayout](
+			getDrawSettingsForLayout(drawSettings, 'intermediate'),
+			n.members,
+			n,
+		),
 	);
 	rootNodes.forEach(n =>
-		layoutOptionToFunction[drawSettings.intermediateLayout](drawSettings, n.members, n),
+		layoutOptionToFunction[drawSettings.intermediateLayout](
+			getDrawSettingsForLayout(drawSettings, 'intermediate'),
+			n.members,
+			n,
+		),
 	);
-	layoutOptionToFunction[drawSettings.rootLayout](drawSettings, rootNodes); // Todo this is weird
+	layoutOptionToFunction[drawSettings.rootLayout](
+		getDrawSettingsForLayout(drawSettings, 'root'),
+		rootNodes,
+	); // Todo this is weird
 
 	// ZOOM HANDLING
 	// Create canvas to contain all elements, so we can transform it for zooming etc.

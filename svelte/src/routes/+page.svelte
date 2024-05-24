@@ -43,7 +43,12 @@
 		minimumNodeSize: 50,
 		buttonRadius: 5,
 		nodeCornerRadius: 5,
-		nodePadding: 50,
+		nodePadding: 20,
+		nodeMargin: {
+			inner: 30,
+			intermediate: 30,
+			root: 30,
+		},
 		textSize: 10,
 		shownEdgesType: new Map<EdgeType, boolean>(),
 		showEdgeLabels: false,
