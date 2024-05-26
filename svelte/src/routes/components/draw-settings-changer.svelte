@@ -7,7 +7,6 @@
 	import {colorPallets, getNodeColors} from '$scripts';
 	export let drawSettings: DrawSettingsInterface;
 	export let doRedraw;
-	export let doRelayout;
 	export let maximumDepth: number;
 	let colorScheme: string | undefined;
 	let colorSchemeSettings = {inverted: true, increaseBrightness: true, increaseSaturation: true};
@@ -84,21 +83,6 @@
 		</Toggle>
 	</div>
 
-	<!-- Show Edge Port -->
-	<div>
-		<Heading headingNumber={5}>Show Edge Port</Heading>
-		<Toggle
-			class="ml-4"
-			onToggle={() => {
-				drawSettings.showEdgePorts = !drawSettings.showEdgePorts;
-				doRelayout = true;
-			}}
-			state={drawSettings.showEdgePorts}
-		>
-			{drawSettings.showEdgePorts ? 'Hide' : 'Show'}
-		</Toggle>
-	</div>
-
 	<!-- seperator -->
 	<div class="h-8" />
 
@@ -114,18 +98,7 @@
 			}}
 		/>
 	</div>
-	<!-- Node Size -->
-	<div>
-		<Heading headingNumber={5}>Node Size</Heading>
-		<Input
-			type="number"
-			value={drawSettings.minimumNodeSize}
-			onChange={e => {
-				drawSettings.minimumNodeSize = Number(e.currentTarget.value);
-				doRelayout = true;
-			}}
-		/>
-	</div>
+
 	<!-- nodeCornerRadius -->
 	<div>
 		<Heading headingNumber={5}>node Corner Radius</Heading>
@@ -138,18 +111,7 @@
 			}}
 		/>
 	</div>
-	<!-- node padding -->
-	<div>
-		<Heading headingNumber={5}>node padding</Heading>
-		<Input
-			type="number"
-			value={drawSettings.nodePadding}
-			onChange={e => {
-				drawSettings.nodePadding = Number(e.currentTarget.value);
-				doRelayout = true;
-			}}
-		/>
-	</div>
+
 	<!-- seperator -->
 	<div class="h-8" />
 
@@ -235,38 +197,5 @@
 		>
 			Add new level
 		</Button>
-	</div>
-	<!-- layout settings -->
-	<div>
-		<Heading headingNumber={5}>Inner Layout</Heading>
-
-		<select
-			bind:value={drawSettings.innerLayout}
-			on:change={() => {
-				doRelayout = true;
-			}}
-		>
-			{#each options as value}<option {value}>{value}</option>{/each}
-		</select>
-		<Heading headingNumber={5}>Intermediate Layout</Heading>
-
-		<select
-			bind:value={drawSettings.intermediateLayout}
-			on:change={() => {
-				doRelayout = true;
-			}}
-		>
-			{#each options as value}<option {value}>{value}</option>{/each}
-		</select>
-		<Heading headingNumber={5}>Root Layout</Heading>
-
-		<select
-			bind:value={drawSettings.rootLayout}
-			on:change={() => {
-				doRelayout = true;
-			}}
-		>
-			{#each options as value}<option {value}>{value}</option>{/each}
-		</select>
 	</div>
 </div>

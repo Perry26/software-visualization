@@ -22,6 +22,7 @@
 	import DrawSettingsChanger from './components/draw-settings-changer.svelte';
 	import EvaluationButton from './components/evaluator-button.svelte';
 	import {LayoutMetrics} from '$scripts/draw/metrics';
+	import LayoutChanger from './components/scripts/layout-changer.svelte';
 
 	let redrawFunction = (_: DrawSettingsInterface) => {};
 	let rawData: RawInputType;
@@ -167,7 +168,8 @@
 		<div class="bg-neutral-300 h-[1px]" />
 		<ConfigChanger bind:config bind:doRefilter bind:flattenNodes />
 		<div class="bg-neutral-300 h-[1px]" />
-		<DrawSettingsChanger bind:drawSettings bind:doRedraw bind:doRelayout bind:maximumDepth />
+		<DrawSettingsChanger bind:drawSettings bind:doRedraw bind:maximumDepth />
+		<LayoutChanger bind:drawSettings bind:doRelayout />
 		<div class="bg-neutral-300 h-[1px]" />
 		<EvaluationButton bind:evaluator />
 	</div>
