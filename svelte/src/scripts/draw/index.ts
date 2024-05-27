@@ -10,13 +10,13 @@ import type {
 
 import {setupGradient} from './helper/gradient-setup';
 import {
-	forceBasedLayout,
 	circularLayout,
+	forceBasedLayout,
 	straightTreeLayout,
 	layerTreeLayout,
-	type NodeLayout,
 	getDrawSettingsForLayout,
-} from './layouts';
+} from '../layouts';
+import type {NodeLayout} from '$scripts/layouts/types';
 import {renderLinks} from './link-render';
 import {addDragAndDrop} from './drag-and-drop';
 import {renderNodes, renderNodeLabels, addLiftCollapseButtons, renderPorts} from './nodes-render';
