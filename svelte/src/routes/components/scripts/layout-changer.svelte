@@ -47,12 +47,16 @@
 
 	<!-- node padding -->
 	<div>
-		<Heading headingNumber={5}>node padding</Heading>
+		<Heading headingNumber={5}>Node Padding</Heading>
 		<Input
 			type="number"
 			value={drawSettings.nodePadding}
 			onChange={e => {
-				drawSettings.nodePadding = Number(e.currentTarget.value);
+				drawSettings.nodePadding = Math.max(
+					Number(e.currentTarget.value),
+					2 * drawSettings.buttonRadius,
+				);
+				e.currentTarget.value = drawSettings.nodePadding;
 				doRelayout = true;
 			}}
 		/>

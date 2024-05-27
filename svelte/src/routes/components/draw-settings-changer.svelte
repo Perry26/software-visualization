@@ -94,6 +94,7 @@
 			value={drawSettings.buttonRadius}
 			onChange={e => {
 				drawSettings.buttonRadius = Number(e.currentTarget.value);
+				drawSettings.nodePadding = Math.max(drawSettings.buttonRadius, drawSettings.nodePadding);
 				doRedraw = true;
 			}}
 		/>
