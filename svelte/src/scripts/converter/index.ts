@@ -8,6 +8,7 @@ import {
 import type {RawNodeType, RawInputType} from '../../types/raw-data';
 import {simpleData} from '../../example-raw-data/simple-data';
 import {v4 as uuidv4} from 'uuid';
+import {partitionArray} from '$helper';
 
 const languagePrimitives: (string | RegExp)[] = [
 	/java\.lang(.*)/,
@@ -73,18 +74,31 @@ export function converter(rawData: RawInputType, config: RawDataConfigType): Con
 		});
 	// at this point, we have no use for rawData. we only play with links and nodesAsObject
 
-	// change nodes member based on links 'contains'
-	links.forEach(link => {
-		if (link.type === EdgeType.contains) {
-			// put child node inside parent node
-			nodesAsObject[link.source].members?.push(nodesAsObject[link.target]);
-			// All nodelevels where initialized at 0. However, if this is a childnode, we don't know the level yet.
-			// We'll recalculate the level in calculateNestingLevels;
-			nodesAsObject[link.target].level = NaN;
+	/** Links which aren't rendered on screen, but part of the nesting hierarchy
+	 * (shown to th user by nesting nodes inside eachother) */
+	let nestingLinks;
+	[nestingLinks, links] = partitionArray(links, link => link.type === EdgeType.contains);
+
+	// We need to remove multi-inheritance from the nestingLinks; since visualizing multi-inheritance by nesting
+	// is out of scope, (and very complicated / almost always impossible)
+	const seen = new Set<string>();
+	nestingLinks = nestingLinks.filter(link => {
+		if (seen.has(link.target)) {
+			links.push(link);
+			return false;
 		}
+		seen.add(link.target);
+		return true;
 	});
-	// delete links which type is 'contains'
-	links = links.filter(link => link.type !== EdgeType.contains);
+
+	// Change nodes member based on links 'contains'
+	nestingLinks.forEach(link => {
+		// Put child node inside parent node
+		nodesAsObject[link.source].members?.push(nodesAsObject[link.target]);
+		// All nodelevels where initialized at 0. However, if this is a childnode, we don't know the level yet.
+		// We'll recalculate the level in calculateNestingLevels;
+		nodesAsObject[link.target].level = NaN;
+	});
 
 	// Nodes at level 0 already are properly initialized, but we still need to calculate the level for the rest
 	let maximumDepth = 0;

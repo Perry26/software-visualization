@@ -120,3 +120,11 @@ export function distributedCopy<T>(items: T[], n: number) {
 	elements.push(items[items.length - 1]);
 	return elements;
 }
+
+/** Splits an array into 2 arrays based on predicate */
+export function partitionArray<T>(
+	array: T[],
+	predicate: (value: T, index: number, array: T[]) => boolean,
+): [T[], T[]] {
+	return [array.filter(predicate), array.filter((...args) => !predicate(...args))];
+}
