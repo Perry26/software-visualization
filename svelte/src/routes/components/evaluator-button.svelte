@@ -3,8 +3,7 @@
 	import type {LayoutMetrics} from '$scripts/draw/metrics';
 
 	export let evaluator: LayoutMetrics | undefined;
-	export let isRunning: boolean = false;
-	let results: string = '';
+	export let results: string = '';
 </script>
 
 <div>
@@ -15,6 +14,7 @@
 			if (!evaluator) {
 				console.error('No evaluator found; you probably need to reload the page');
 			} else {
+				results = '';
 				results = evaluator.run();
 			}
 		}}

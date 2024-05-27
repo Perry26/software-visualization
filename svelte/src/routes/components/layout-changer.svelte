@@ -77,6 +77,7 @@
 			{#each options as value}<option {value}>{value}</option>{/each}
 		</select>
 		Layout algorithm
+		<br />
 		<Input
 			type="number"
 			value={drawSettings.nodeMargin.inner}
@@ -96,6 +97,7 @@
 			{#each options as value}<option {value}>{value}</option>{/each}
 		</select>
 		Layout algorithm
+		<br />
 		<Input
 			type="number"
 			value={drawSettings.nodeMargin.intermediate}
@@ -115,6 +117,7 @@
 			{#each options as value}<option {value}>{value}</option>{/each}
 		</select>
 		Layout algorithm
+		<br />
 		<Input
 			type="number"
 			value={drawSettings.nodeMargin.root}

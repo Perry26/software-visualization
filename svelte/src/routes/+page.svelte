@@ -17,12 +17,16 @@
 	import {cleanCanvas, draw, filter, converter, createGraphData, getNodeColors} from '$scripts';
 
 	// components
+	import TabsComponent from './components/tabs-component.svelte';
 	import RawDataInputer from './components/raw-data-inputer.svelte';
 	import ConfigChanger from './components/config-changer.svelte';
 	import DrawSettingsChanger from './components/draw-settings-changer.svelte';
 	import EvaluationButton from './components/evaluator-button.svelte';
 	import {LayoutMetrics} from '$scripts/draw/metrics';
 	import LayoutChanger from './components/layout-changer.svelte';
+	import {SidePanelTab} from '$types/ui';
+
+	let sidePanelTab: SidePanelTab = SidePanelTab.Input;
 
 	let redrawFunction = (_: DrawSettingsInterface) => {};
 	let rawData: RawInputType;
@@ -64,6 +68,7 @@
 
 	let svgElement: SVGElement | undefined = undefined;
 	let evaluator: LayoutMetrics = new LayoutMetrics();
+	let evaluatorResults: string = '';
 
 	let doReconvert = true;
 	let doRefilter = true;
@@ -141,6 +146,8 @@
 				);
 				doRedraw = true;
 				doRelayout = false;
+
+				evaluatorResults = '';
 			}
 
 			if (doRedraw) {
@@ -164,14 +171,22 @@
 
 	<!-- sidepanel -->
 	<div class="flex flex-col m-6">
-		<RawDataInputer bind:rawData bind:doReconvert bind:rawDataConfig />
-		<div class="bg-neutral-300 h-[1px]" />
-		<ConfigChanger bind:config bind:doRefilter bind:flattenNodes />
-		<div class="bg-neutral-300 h-[1px]" />
-		<DrawSettingsChanger bind:drawSettings bind:doRedraw bind:maximumDepth />
-		<div class="bg-neutral-300 h-[1px]" />
-		<LayoutChanger bind:drawSettings bind:doRelayout />
-		<div class="bg-neutral-300 h-[1px]" />
-		<EvaluationButton bind:evaluator />
+		<TabsComponent bind:sidePanelTab />
+		<br />
+
+		<div style="display: {sidePanelTab === SidePanelTab.Input ? 'block' : 'none'}">
+			<RawDataInputer bind:rawData bind:doReconvert bind:rawDataConfig />
+		</div>
+		<div style="display: {sidePanelTab === SidePanelTab.Config ? 'block' : 'none'}">
+			<ConfigChanger bind:config bind:doRefilter bind:flattenNodes />
+		</div>
+		<div style="display: {sidePanelTab === SidePanelTab.DrawSettings ? 'block' : 'none'}">
+			<DrawSettingsChanger bind:drawSettings bind:doRedraw bind:maximumDepth />
+		</div>
+		<div style="display: {sidePanelTab === SidePanelTab.Layout ? 'block' : 'none'}">
+			<LayoutChanger bind:drawSettings bind:doRelayout />
+		</div>
+		<div style="display: {sidePanelTab === SidePanelTab.Evaluation ? 'block' : 'none'}" />
+		<EvaluationButton bind:evaluator bind:results={evaluatorResults} />
 	</div>
 </div>
