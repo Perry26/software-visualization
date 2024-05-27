@@ -170,7 +170,16 @@ export function renderPorts(
 	).each(function ({id, level}) {
 		d3.select(this)
 			.selectAll('rect.port')
-			.data(portMap[id])
+			.data(
+				portMap[id].filter(({types}) => {
+					for (const [edgeType, show] of drawSettings.shownEdgesType) {
+						if (show && types.has(edgeType)) {
+							return true;
+						}
+					}
+					return false;
+				}),
+			)
 			.join('rect')
 			.attr('class', 'port')
 			.attr('x', ({x, width}) => x - 0.5 * width)

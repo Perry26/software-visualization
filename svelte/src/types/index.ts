@@ -193,6 +193,8 @@ export interface GraphDataNode extends SimpleNode {
 export interface EdgePort extends EdgeRoutingOrigin {
 	width: number;
 	height: number;
+	/** The types of edges passing through the port (so we know when to render it later) */
+	types: Set<EdgeType>;
 }
 
 export type EdgePortMap = {[id: string]: EdgePort[]};

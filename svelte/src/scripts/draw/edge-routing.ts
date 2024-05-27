@@ -11,6 +11,7 @@ import type {
 	EdgePortMap,
 	EdgeRoutingOrigin,
 	EdgeRoutingPoint,
+	EdgeType,
 	GraphDataEdge,
 	GraphDataEdgeDrawn,
 	GraphDataNode,
@@ -42,6 +43,7 @@ export function addEdgePorts(
 			height: portHeight,
 			parent: n,
 			edges: [],
+			types: new Set<EdgeType>(),
 		};
 		const outgoing = {
 			x: 0,
@@ -50,6 +52,7 @@ export function addEdgePorts(
 			height: portHeight,
 			parent: n,
 			edges: [],
+			types: new Set<EdgeType>(),
 		};
 		incomingMap[n.id] = incoming;
 		outgoingMap[n.id] = outgoing;
@@ -65,6 +68,7 @@ export function addEdgePorts(
 			};
 			edge.routing.push(point);
 			outgoingMap[node.id].edges.push(edge);
+			outgoingMap[node.id].types.add(edge.type);
 		});
 
 		slice2.forEach(node => {
@@ -75,6 +79,7 @@ export function addEdgePorts(
 			};
 			edge.routing.push(point);
 			incomingMap[node.id].edges.push(edge);
+			incomingMap[node.id].types.add(edge.type);
 		});
 	});
 
@@ -117,6 +122,5 @@ export function addEdgePorts(
 		}
 	});
 
-	//return incomingMap;
 	return portMap;
 }
