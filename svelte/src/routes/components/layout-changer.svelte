@@ -86,6 +86,17 @@
 				doRelayout = true;
 			}}
 		/> Node Margin
+		<Toggle
+			class="ml-4"
+			onToggle={() => {
+				drawSettings.layoutSettings.inner.uniformSize =
+					!drawSettings.layoutSettings.inner.uniformSize;
+				doRelayout = true;
+			}}
+			state={drawSettings.layoutSettings.inner.uniformSize}
+			disabled={!['layerTree', 'straightTree'].includes(drawSettings.innerLayout)}
+			>Uniform node sizes</Toggle
+		>
 		<Heading headingNumber={5}>Intermediate Layout</Heading>
 
 		<select
@@ -106,6 +117,19 @@
 				doRelayout = true;
 			}}
 		/> Node Margin
+
+		<Toggle
+			class="ml-4"
+			onToggle={() => {
+				drawSettings.layoutSettings.intermediate.uniformSize =
+					!drawSettings.layoutSettings.intermediate.uniformSize;
+				doRelayout = true;
+			}}
+			state={drawSettings.layoutSettings.intermediate.uniformSize}
+			disabled={!['layerTree', 'straightTree'].includes(drawSettings.intermediateLayout)}
+			>Uniform node sizes</Toggle
+		>
+
 		<Heading headingNumber={5}>Root Layout</Heading>
 
 		<select
@@ -126,5 +150,16 @@
 				doRelayout = true;
 			}}
 		/> Node Margin
+		<Toggle
+			class="ml-4"
+			onToggle={() => {
+				drawSettings.layoutSettings.root.uniformSize =
+					!drawSettings.layoutSettings.root.uniformSize;
+				doRelayout = true;
+			}}
+			state={drawSettings.layoutSettings.root.uniformSize}
+			disabled={!['layerTree', 'straightTree'].includes(drawSettings.rootLayout)}
+			>Uniform node sizes</Toggle
+		>
 	</div>
 </div>

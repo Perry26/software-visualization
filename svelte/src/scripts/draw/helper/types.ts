@@ -21,3 +21,6 @@ export interface simulationLinkType {
 	target: simulationNodeDatumType;
 	type: EdgeType;
 }
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type OmitStrict<T, K extends keyof T> = T extends any ? Pick<T, Exclude<keyof T, K>> : never;

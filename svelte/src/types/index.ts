@@ -1,3 +1,5 @@
+import type {LayoutSettingsType} from '$scripts/layouts/types';
+
 export type {RawInputType} from './raw-data';
 
 export interface ConfigInterface {
@@ -36,6 +38,11 @@ export interface DrawSettingsInterface extends drawSettingsInterfaceDummy {
 	innerLayout: LayoutOptions;
 	intermediateLayout: LayoutOptions;
 	rootLayout: LayoutOptions;
+	layoutSettings: {
+		inner: LayoutSettingsType;
+		intermediate: LayoutSettingsType;
+		root: LayoutSettingsType;
+	};
 }
 
 export interface RawDataConfigType {

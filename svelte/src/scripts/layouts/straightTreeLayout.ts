@@ -70,12 +70,7 @@ function cleanupTree(nodes: TreeNode[]) {
  * (which is unavoidable anyway)
  */
 
-export const straightTreeLayout: NodeLayout = function (
-	drawSettings,
-	childNodes,
-	parentNode?,
-	options?,
-) {
+export const straightTreeLayout: NodeLayout = function (drawSettings, childNodes, parentNode?) {
 	if (childNodes.length === 0) {
 		return;
 	}
@@ -83,7 +78,7 @@ export const straightTreeLayout: NodeLayout = function (
 	const {nodes, rootNode} = discoverTree(childNodes);
 
 	// Make all nodes the same size (as intended for the algorithm)
-	if (!options?.uniformSize) {
+	if (drawSettings.layoutSettings.uniformSize) {
 		const width = Math.max(...nodes.map(n => n.width), drawSettings.minimumNodeSize);
 		const height = Math.max(...nodes.map(n => n.height), drawSettings.minimumNodeSize);
 		nodes.forEach(n => {

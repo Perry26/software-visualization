@@ -64,6 +64,11 @@
 		innerLayout: 'layerTree',
 		intermediateLayout: 'layerTree',
 		rootLayout: 'layerTree',
+		layoutSettings: {
+			inner: {uniformSize: true},
+			intermediate: {uniformSize: true},
+			root: {uniformSize: true},
+		},
 	};
 
 	let svgElement: SVGElement | undefined = undefined;
@@ -186,7 +191,8 @@
 		<div style="display: {sidePanelTab === SidePanelTab.Layout ? 'block' : 'none'}">
 			<LayoutChanger bind:drawSettings bind:doRelayout />
 		</div>
-		<div style="display: {sidePanelTab === SidePanelTab.Evaluation ? 'block' : 'none'}" />
-		<EvaluationButton bind:evaluator bind:results={evaluatorResults} />
+		<div style="display: {sidePanelTab === SidePanelTab.Evaluation ? 'block' : 'none'}">
+			<EvaluationButton bind:evaluator bind:results={evaluatorResults} />
+		</div>
 	</div>
 </div>

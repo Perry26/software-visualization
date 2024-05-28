@@ -40,7 +40,7 @@
 
 <div class="">
 	<Heading>Input raw data</Heading>
-	<label for="uploader">Upload a json file:</label>
+	<label for="uploader">Upload a json file:</label><br />
 	<input
 		accept="application/json"
 		bind:files

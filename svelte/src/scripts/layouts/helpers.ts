@@ -11,7 +11,11 @@ export function getDrawSettingsForLayout(
 	settings: DrawSettingsInterface,
 	layoutType: LayoutNestingLevels,
 ): LayoutDrawSettingsInterface {
-	return {...settings, nodeMargin: settings.nodeMargin[layoutType]};
+	return {
+		...settings,
+		nodeMargin: settings.nodeMargin[layoutType],
+		layoutSettings: settings.layoutSettings[layoutType],
+	};
 }
 
 export const filterEdges = (l: GraphDataEdge) => {

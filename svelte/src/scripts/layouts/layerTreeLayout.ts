@@ -7,12 +7,7 @@ import type {NodeLayout, GraphDataNodeExt} from './types.ts';
  * A layered tree using the Sugiyama method
  */
 
-export const layerTreeLayout: NodeLayout = function (
-	drawSettings,
-	childNodes,
-	parentNode?,
-	options?,
-) {
+export const layerTreeLayout: NodeLayout = function (drawSettings, childNodes, parentNode?) {
 	if (childNodes.length === 0) return;
 
 	/**
@@ -26,6 +21,8 @@ export const layerTreeLayout: NodeLayout = function (
 	 * The layer indicates at which layer the node will be rendered (top to bottom) */
 	type LayerTreeNode = GraphDataNodeExt & {
 		layer?: number;
+		layerHeight?: number;
+		columnWidth?: number;
 	};
 	/** Same as childNodes, but cast to the right type */
 	const nodes = checkWidthHeight(childNodes) as LayerTreeNode[];
@@ -46,6 +43,9 @@ export const layerTreeLayout: NodeLayout = function (
 		/** In between steps 3 and 4, dummynodes are merged and deleted.
 		 * If this node has been deleted, this property points to the merged node */
 		realDummy?: DummyNode;
+
+		layerHeight?: number;
+		columnWidth?: number;
 	};
 
 	/** Array containing all layers, where layers themselves are stored.
@@ -187,16 +187,15 @@ export const layerTreeLayout: NodeLayout = function (
 
 	// Step 4: Coordinate assignment
 	// First, make sure everything has the same width and height
-	const numColumns = Math.max(...layerNodes.map(l => l.length));
-
 	layerNodes.forEach(layer => {
-		const maxHeight = Math.max(...layer.map(l => l.height));
-		layer.forEach(node => (node.height = maxHeight));
+		const layerHeight = Math.max(...layer.map(l => l.height));
+		layer.forEach(node => (node.layerHeight = layerHeight));
 	});
 
+	const numColumns = Math.max(...layerNodes.map(l => l.length));
 	for (let i = 0; i < numColumns; i++) {
 		const columnWidth = Math.max(...layerNodes.map(l => l[i]?.width ?? 0));
-		layerNodes.forEach(layer => (layer[i] ? (layer[i].width = columnWidth) : undefined));
+		layerNodes.forEach(layer => (layer[i] ? (layer[i].columnWidth = columnWidth) : undefined));
 	}
 
 	// Assign coordinates
@@ -205,16 +204,23 @@ export const layerTreeLayout: NodeLayout = function (
 	layerNodes.forEach(layer => {
 		let currentWidth = 0;
 		layer.forEach(node => {
-			node.y = currentHeight + 0.5 * node.height;
-			node.x = currentWidth + 0.5 * node.width;
-			currentWidth += node.width + drawSettings.nodeMargin;
+			node.y = currentHeight + 0.5 * node.layerHeight!;
+			node.x = currentWidth + 0.5 * node.columnWidth!;
+			currentWidth += node.columnWidth! + drawSettings.nodeMargin;
 		});
-		currentHeight += layer[0]?.height + drawSettings.nodeMargin;
+		currentHeight += layer[0].layerHeight! + drawSettings.nodeMargin;
 	});
+
+	if (drawSettings.layoutSettings.uniformSize) {
+		layerNodes.flat().forEach(n => {
+			n.height = n.layerHeight!;
+			n.width = n.columnWidth!;
+		});
+	}
 
 	// Finally: edge routing
 	// We want to route edges through their dummy nodes.
-	if (options?.edgeRouting) {
+	if (drawSettings.layoutSettings.edgeRouting) {
 		sugEdges.forEach(e => {
 			if ('isDummy' in e.target) {
 				const target = e.target.realDummy ?? e.target;
@@ -228,15 +234,8 @@ export const layerTreeLayout: NodeLayout = function (
 		});
 	}
 
-	if (parentNode?.id === 'com.fsck.k9.K9$Intents') {
-		console.log({coords: layerNodes.map(l => l.map(n => ({x: n.x, y: n.y})))});
-	}
 	if (parentNode) {
 		const {width, height} = centerize(nodes, [...allEdges]);
-		if (parentNode?.id === 'com.fsck.k9.K9$Intents') {
-			console.log({coords: layerNodes.map(l => l.map(n => ({x: n.x, y: n.y})))});
-		}
-
 		parentNode.width = width + 2 * drawSettings.nodePadding;
 		parentNode.height = height + 2 * drawSettings.nodePadding;
 	}
