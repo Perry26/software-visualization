@@ -47,8 +47,7 @@ export class LayoutMetrics {
 	/** Set the latest graphData rendered, so it is accessible from this file */
 	run() {
 		if (!this.data) {
-			console.error('No GraphData found!');
-			return 'Error: no data found!';
+			throw new Error('Data for evaluator not found');
 		}
 
 		// Prepare data
@@ -151,13 +150,46 @@ export class LayoutMetrics {
 
 		const area = Math.abs(maxX - minX) * Math.abs(maxY - minY);
 
-		// Return results
-		return `There are ${lineLineIntersectCount} line intersections. ${
-			fullLineOverlapping ? fullLineOverlapping + ' \nlines are fully overlapping.' : ''
+		const aspectRatio = Math.abs(maxX - minX) / Math.abs(maxY - minY);
+
+		// Orthogonality metrics
+		// TODO nodes must be unrelated
+		let orthogonalNodeCount = 0;
+		for (let i = 0; i < boxes.length; i++) {
+			for (let j = i + 1; j < boxes.length; j++) {
+				const [box1, box2] = [boxes[i].box, boxes[j].box];
+				if (box1.center.x === box2.center.x) {
+					console.log({box1, box2});
+					orthogonalNodeCount++;
+				}
+				if (box1.center.y === box2.center.y) {
+					orthogonalNodeCount++;
+				}
+			}
 		}
-		Line segments deviate ${averageSegmentDifference} from the average
-		There are ${rectangleOverlappingCount} nodes overlapping
-		${lineRectangleIntersectionCount} lines are overlapping an unrelated node
-		The area of the drawing is ${area}`;
+
+		// Prepare output
+		const arr: [string, number][] = [
+			['Node overlaps', rectangleOverlappingCount],
+			['Node orthogonality', orthogonalNodeCount],
+			['Total area', area],
+			['Aspect ratio', aspectRatio],
+			['Line intersections', lineLineIntersectCount],
+			['Full line overlaps', fullLineOverlapping],
+			['Avg. length difference', averageSegmentDifference],
+			['Lines overlapping unrelated nodes', lineRectangleIntersectionCount],
+		];
+
+		const copyString = arr.reduce((acc, [label, count]) => {
+			console.log({acc});
+			return acc + label + '\t' + count + '\n';
+		}, '');
+
+		const tableString = arr.reduce((acc, [label, count]) => {
+			return acc + '<tr><td>' + label + '</td><td>' + count + '</td></tr>';
+		}, '');
+
+		// Return results
+		return {copyString, tableString};
 	}
 }

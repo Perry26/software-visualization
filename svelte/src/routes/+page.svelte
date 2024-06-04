@@ -192,7 +192,7 @@
 			<LayoutChanger bind:drawSettings bind:doRelayout />
 		</div>
 		<div style="display: {sidePanelTab === SidePanelTab.Evaluation ? 'block' : 'none'}">
-			<EvaluationButton bind:evaluator bind:results={evaluatorResults} />
+			<EvaluationButton bind:evaluator />
 		</div>
 	</div>
 </div>
