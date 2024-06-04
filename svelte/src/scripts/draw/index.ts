@@ -48,7 +48,9 @@ export function draw(
 		circular: circularLayout,
 		straightTree: straightTreeLayout,
 		layerTree: layerTreeLayout,
+		forceBased: forceBasedLayout,
 	};
+
 	// Calculate layouts for non-simple nodes
 	innerNodes.forEach(n =>
 		layoutOptionToFunction[drawSettings.innerLayout](

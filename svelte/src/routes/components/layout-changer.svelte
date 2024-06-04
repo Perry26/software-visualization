@@ -8,7 +8,7 @@
 	export let doRelayout;
 
 	// layout options
-	let options: LayoutOptions[] = ['layerTree', 'straightTree', 'circular'];
+	let options: LayoutOptions[] = ['layerTree', 'straightTree', 'circular', 'forceBased'];
 </script>
 
 <div class="overflow-auto">

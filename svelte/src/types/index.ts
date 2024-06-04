@@ -50,7 +50,7 @@ export interface RawDataConfigType {
 	filterAllEncompassingNodes: boolean;
 }
 
-export type LayoutOptions = 'layerTree' | 'circular' | 'straightTree';
+export type LayoutOptions = 'layerTree' | 'circular' | 'straightTree' | 'forceBased';
 
 export type LayoutNestingLevels = 'inner' | 'intermediate' | 'root';
 
