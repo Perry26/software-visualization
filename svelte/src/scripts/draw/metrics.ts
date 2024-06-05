@@ -184,6 +184,9 @@ export class LayoutMetrics {
 			}
 		}
 
+		// Line bends
+		const lineBends = this.data!.links.reduce((acc, l) => acc + l.routing.length, 0);
+
 		// Prepare output
 		const arr: [string, number][] = [
 			['Node overlaps', rectangleOverlappingCount],
@@ -192,6 +195,7 @@ export class LayoutMetrics {
 			['Aspect ratio', aspectRatio],
 			['Line intersections', lineLineIntersectCount],
 			['Full line overlaps', fullLineOverlapping],
+			['Line bends', lineBends],
 			['Avg. length difference', averageSegmentDifference],
 			['Avg. radial distance on intersections', totalLineAngle],
 			['Lines overlapping unrelated nodes', lineRectangleIntersectionCount],
