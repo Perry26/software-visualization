@@ -32,7 +32,7 @@ function isPrimitive(id: string) {
 
 export function converter(rawData: RawInputType, config: RawDataConfigType): ConvertedData {
 	// give default data when no data is given
-	if (!rawData) {
+	if (!rawData.elements) {
 		rawData = simpleData;
 	}
 
@@ -41,7 +41,7 @@ export function converter(rawData: RawInputType, config: RawDataConfigType): Con
 	const nodesAsObject: {[id: string]: ConvertedNode} = {};
 
 	// Populate object, so we can create references later
-	rawData.elements.nodes.forEach(({data}: RawNodeType) => {
+	rawData.elements!.nodes.forEach(({data}: RawNodeType) => {
 		if (config.filterPrimitives && isPrimitive(data.id)) {
 			return;
 		}
@@ -52,8 +52,8 @@ export function converter(rawData: RawInputType, config: RawDataConfigType): Con
 		};
 	});
 
-	let links: ConvertedEdge[] = rawData.elements.edges
-		.filter(
+	let links: ConvertedEdge[] = rawData
+		.elements!.edges.filter(
 			({data}) =>
 				!config.filterPrimitives || !(isPrimitive(data.source) || isPrimitive(data.target)),
 		)
@@ -61,7 +61,7 @@ export function converter(rawData: RawInputType, config: RawDataConfigType): Con
 			// Throw an error if label is not of type EdgeType
 			const label = (data.label ?? data.labels?.[0] ?? EdgeType.unknown) as EdgeType;
 			if (!Object.values(EdgeType).includes(label)) {
-				console.log(new Set(rawData.elements.edges.map(r => r.data.label ?? r.data.labels?.[0])));
+				console.log(new Set(rawData.elements!.edges.map(r => r.data.label ?? r.data.labels?.[0])));
 				throw new Error(`Unknown edge type ${label}`);
 			}
 			return {

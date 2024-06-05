@@ -4,18 +4,19 @@
 	import type {RawInputType} from '$types/raw-data';
 	import type {RawDataConfigType} from '$types';
 
-	export let rawData: RawInputType | undefined;
+	export let rawData: RawInputType = {};
 	export let doReconvert: boolean;
 	export let rawDataConfig: RawDataConfigType;
 
-	let files: any;
+	let files: FileList;
 	let useExampleData = true;
 	let disableButton = true;
 
-	const loadItems = async (file: any) => {
+	const loadItems = async (file: File) => {
 		let text = await file.text();
 
 		rawData = JSON.parse(text);
+		rawData!.fileName = file.name;
 		doReconvert = true;
 	};
 
@@ -30,7 +31,7 @@
 	// TODO: need to fix. whenever file is changed, bellow is triggered. we don't want unnecessary reconvert
 	$: {
 		if (useExampleData) {
-			rawData = undefined;
+			rawData = {};
 			doReconvert = true;
 		} else {
 			loadItems(files[0]);

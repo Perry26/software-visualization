@@ -1,9 +1,10 @@
 export interface RawInputType {
 	// (generated via https://transform.tools/json-to-typescript)
-	elements: {
+	elements?: {
 		nodes: RawNodeType[];
 		edges: RawEdgeType[];
 	};
+	fileName?: string;
 }
 export interface RawNodeType {
 	data: {

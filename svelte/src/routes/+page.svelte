@@ -29,7 +29,7 @@
 	let sidePanelTab: SidePanelTab = SidePanelTab.Input;
 
 	let redrawFunction = (_: DrawSettingsInterface) => {};
-	let rawData: RawInputType;
+	let rawData: RawInputType = {};
 	let convertedData: ConvertedData;
 	let rawDataConfig: RawDataConfigType = {
 		filterPrimitives: true,
@@ -73,7 +73,7 @@
 
 	let svgElement: SVGElement | undefined = undefined;
 	let evaluator: LayoutMetrics = new LayoutMetrics();
-	let evaluatorResults: string = '';
+	let resetEvaluator: () => {};
 
 	let doReconvert = true;
 	let doRefilter = true;
@@ -152,7 +152,7 @@
 				doRedraw = true;
 				doRelayout = false;
 
-				evaluatorResults = '';
+				resetEvaluator();
 			}
 
 			if (doRedraw) {
@@ -192,7 +192,7 @@
 			<LayoutChanger bind:drawSettings bind:doRelayout />
 		</div>
 		<div style="display: {sidePanelTab === SidePanelTab.Evaluation ? 'block' : 'none'}">
-			<EvaluationButton bind:evaluator />
+			<EvaluationButton bind:evaluator bind:resetEvaluator bind:fileName={rawData.fileName} />
 		</div>
 	</div>
 </div>
