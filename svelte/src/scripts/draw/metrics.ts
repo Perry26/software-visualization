@@ -168,16 +168,18 @@ export class LayoutMetrics {
 		const aspectRatio = Math.abs(maxX - minX) / Math.abs(maxY - minY);
 
 		// Orthogonality metrics
-		// TODO nodes must be unrelated
 		let orthogonalNodeCount = 0;
 		for (let i = 0; i < boxes.length; i++) {
 			for (let j = i + 1; j < boxes.length; j++) {
 				const [box1, box2] = [boxes[i].box, boxes[j].box];
-				if (box1.center.x === box2.center.x) {
-					orthogonalNodeCount++;
-				}
-				if (box1.center.y === box2.center.y) {
-					orthogonalNodeCount++;
+				const [node1, node2] = [boxes[i].node, boxes[j].node];
+				if (!(isAncestor(node1, node2) || isAncestor(node2, node1))) {
+					if (box1.center.x === box2.center.x) {
+						orthogonalNodeCount++;
+					}
+					if (box1.center.y === box2.center.y) {
+						orthogonalNodeCount++;
+					}
 				}
 			}
 		}
