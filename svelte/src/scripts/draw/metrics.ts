@@ -37,6 +37,18 @@ function getAbsPosition(node: GraphDataNode): {x: number; y: number} {
 	}
 }
 
+/** Calculates the angle between 2 intersecting line segments */
+function lineAngle(a: Segment, b: Segment) {
+	const dAx = a.end.x - a.start.x;
+	const dAy = a.end.y - a.start.y;
+	const dBx = b.end.x - b.start.x;
+	const dBy = b.end.y - b.start.y;
+	const angle = Math.atan2(dAx * dBy - dAy * dBx, dAx * dBx + dAy * dBy);
+
+	const resultInDegrees = angle * (180 / Math.PI);
+	return resultInDegrees;
+}
+
 export class LayoutMetrics {
 	data?: GraphData;
 
@@ -74,18 +86,21 @@ export class LayoutMetrics {
 		// Calculate intersections
 		// Line segments
 		let lineLineIntersectCount = 0;
+		let totalLineAngle = 0;
 		let fullLineOverlapping = 0; // Chances of this going up are extremely slim
 		for (let i = 0; i < segments.length; i++) {
 			for (let j = i + 1; j < segments.length; j++) {
 				const intersect = segments[i].segment.intersect(segments[j].segment);
 				if (intersect.length > 0) {
 					lineLineIntersectCount++;
+					totalLineAngle += Math.abs(lineAngle(segments[i].segment, segments[j].segment));
 				}
 				if (intersect.length > 1) {
 					fullLineOverlapping++;
 				}
 			}
 		}
+		totalLineAngle /= lineLineIntersectCount;
 
 		// Rectangle overlap
 		let rectangleOverlappingCount = 0;
@@ -159,7 +174,6 @@ export class LayoutMetrics {
 			for (let j = i + 1; j < boxes.length; j++) {
 				const [box1, box2] = [boxes[i].box, boxes[j].box];
 				if (box1.center.x === box2.center.x) {
-					console.log({box1, box2});
 					orthogonalNodeCount++;
 				}
 				if (box1.center.y === box2.center.y) {
@@ -177,11 +191,11 @@ export class LayoutMetrics {
 			['Line intersections', lineLineIntersectCount],
 			['Full line overlaps', fullLineOverlapping],
 			['Avg. length difference', averageSegmentDifference],
+			['Avg. radial distance on intersections', totalLineAngle],
 			['Lines overlapping unrelated nodes', lineRectangleIntersectionCount],
 		];
 
 		const copyString = arr.reduce((acc, [label, count]) => {
-			console.log({acc});
 			return acc + label + '\t' + count + '\n';
 		}, '');
 
