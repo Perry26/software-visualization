@@ -71,7 +71,6 @@ export function getNodeColors(
 	return {
 		nodeColors: colors.map(c => {
 			const res = c.toString({format: 'hex'});
-			console.log(c.hsl.s);
 			return to6hex(res);
 		}),
 		nodeDefaultColor: to6hex(defaultColor.toString({format: 'hex'})),

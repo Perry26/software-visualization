@@ -198,5 +198,20 @@
 		>
 			Add new level
 		</Button>
+
+		<!-- Colors from bottom -->
+		<div>
+			<Heading headingNumber={5}>Calculate node colors from bottom</Heading>
+			<Toggle
+				class="ml-4"
+				onToggle={() => {
+					drawSettings.colorFromBottom = !drawSettings.colorFromBottom;
+					doRedraw = true;
+				}}
+				state={drawSettings.colorFromBottom}
+			>
+				{drawSettings.colorFromBottom ? 'From bottom' : 'From top'}
+			</Toggle>
+		</div>
 	</div>
 </div>

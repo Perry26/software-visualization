@@ -98,7 +98,6 @@ export function renderNodes(
 ) {
 	if (nodes.length === 0) return;
 
-	const level = nodes[0].level;
 	const nodeSelection = d3
 		.select(svgElement)
 		.selectAll(':scope > g.nodes')
@@ -125,7 +124,13 @@ export function renderNodes(
 		.attr('id', n => `rect-${toHTMLToken(n.id)}`)
 		.attr('width', n => n.width!)
 		.attr('height', n => n.height!)
-		.attr('fill', drawSettings.nodeColors[level] ?? drawSettings.nodeDefaultColor)
+		.attr(
+			'fill',
+			n =>
+				drawSettings.nodeColors[drawSettings.colorFromBottom ? n.reverseLevel : n.level] ??
+				drawSettings.nodeDefaultColor,
+		)
+		//.attr('fill', drawSettings.nodeColors[level] ?? drawSettings.nodeDefaultColor)
 		.attr('fill-opacity', '0.1')
 		.attr('rx', drawSettings.nodeCornerRadius)
 		.attr('class', 'node')
@@ -167,7 +172,7 @@ export function renderPorts(
 			Element,
 			unknown
 		>
-	).each(function ({id, level}) {
+	).each(function ({id, level, reverseLevel}) {
 		d3.select(this)
 			.selectAll('rect.port')
 			.data(
@@ -186,7 +191,11 @@ export function renderPorts(
 			.attr('y', ({y, height}) => y - 0.5 * height)
 			.attr('width', ({width}) => width)
 			.attr('height', ({height}) => height)
-			.attr('fill', drawSettings.nodeColors[level] ?? drawSettings.nodeDefaultColor)
+			.attr(
+				'fill',
+				drawSettings.nodeColors[drawSettings.colorFromBottom ? reverseLevel : level] ??
+					drawSettings.nodeDefaultColor,
+			)
 			.attr('fill-opacity', '0.3');
 	});
 }

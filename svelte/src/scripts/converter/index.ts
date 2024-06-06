@@ -48,6 +48,7 @@ export function converter(rawData: RawInputType, config: RawDataConfigType): Con
 		nodesAsObject[data.id] = {
 			id: data.id,
 			level: 0,
+			reverseLevel: NaN,
 			members: [],
 		};
 	});
@@ -105,17 +106,21 @@ export function converter(rawData: RawInputType, config: RawDataConfigType): Con
 	let nodes = Object.values(nodesAsObject).filter(node => node.level === 0);
 	calculateNestingLevels(nodes);
 
+	/** Calculates the maximumdepth (global) and the node-level (local). Sets the reverseLevel (node-level counted from the bottom)
+	 * to an intermediate value, which will be overwritten later
+	 */
 	function calculateNestingLevels(node: ConvertedNode[], level: number = 0) {
 		node.forEach(n => {
 			n.level = level;
 			if (n.members) {
 				calculateNestingLevels(n.members, level + 1);
 			}
+			n.reverseLevel = Math.max(...(n.members ?? []).map(m => m.reverseLevel + 1), 0);
 			maximumDepth = Math.max(maximumDepth, level);
 		});
 	}
 
-	// Finally, filter all encompassing nodes (Nodes which are an ancestor to all other nodes) recursively
+	// Filter all encompassing nodes (Nodes which are an ancestor to all other nodes) recursively
 	if (config.filterAllEncompassingNodes) {
 		while (nodes.length === 1) {
 			const theNode = nodes[0];
@@ -125,6 +130,9 @@ export function converter(rawData: RawInputType, config: RawDataConfigType): Con
 		maximumDepth = 0;
 		calculateNestingLevels(nodes);
 	}
+
+	// Calculate reverse level
+	nodes.forEach(n => (n.reverseLevel = maximumDepth - n.reverseLevel));
 
 	return {
 		nodes,

@@ -30,6 +30,7 @@ export interface DrawSettingsInterface extends drawSettingsInterfaceDummy {
 	showNodeLabels: boolean;
 	showEdgeLabels: boolean;
 	showEdgePorts: boolean;
+	colorFromBottom: boolean;
 	nodeDefaultColor: string;
 	nodeColors: string[];
 	/** Remembers the last transformation in-between redraws. */
@@ -62,6 +63,7 @@ export interface SimpleNode {
 export interface ConvertedNode extends SimpleNode {
 	id: string;
 	level: number;
+	reverseLevel: number;
 	members?: ConvertedNode[];
 	parentId?: string;
 }
@@ -170,6 +172,7 @@ export interface EdgeRoutingOrigin {
 export interface GraphDataNode extends SimpleNode {
 	// initial data
 	id: string;
+	reverseLevel: number;
 	level: number;
 
 	// bellow is initial data but already a Reference.
