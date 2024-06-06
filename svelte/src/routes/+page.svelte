@@ -181,19 +181,34 @@
 		<TabsComponent bind:sidePanelTab />
 		<br />
 
-		<div style="display: {sidePanelTab === SidePanelTab.Input ? 'block' : 'none'}">
+		<div
+			class="overflow-y-auto overflow-x-hidden"
+			style="display: {sidePanelTab === SidePanelTab.Input ? 'block' : 'none'}"
+		>
 			<RawDataInputer bind:rawData bind:doReconvert bind:rawDataConfig />
 		</div>
-		<div style="display: {sidePanelTab === SidePanelTab.Config ? 'block' : 'none'}">
+		<div
+			class="overflow-y-auto overflow-x-hidden"
+			style="display: {sidePanelTab === SidePanelTab.Config ? 'block' : 'none'}"
+		>
 			<ConfigChanger bind:config bind:doRefilter bind:flattenNodes />
 		</div>
-		<div style="display: {sidePanelTab === SidePanelTab.DrawSettings ? 'block' : 'none'}">
+		<div
+			class="overflow-y-auto overflow-x-hidden"
+			style="display: {sidePanelTab === SidePanelTab.DrawSettings ? 'block' : 'none'}"
+		>
 			<DrawSettingsChanger bind:drawSettings bind:doRedraw bind:maximumDepth />
 		</div>
-		<div style="display: {sidePanelTab === SidePanelTab.Layout ? 'block' : 'none'}">
+		<div
+			class="overflow-y-auto overflow-x-hidden"
+			style="display: {sidePanelTab === SidePanelTab.Layout ? 'block' : 'none'}"
+		>
 			<LayoutChanger bind:drawSettings bind:doRelayout />
 		</div>
-		<div style="display: {sidePanelTab === SidePanelTab.Evaluation ? 'block' : 'none'}">
+		<div
+			class="overflow-y-auto overflow-x-hidden"
+			style="display: {sidePanelTab === SidePanelTab.Evaluation ? 'block' : 'none'}"
+		>
 			<EvaluationButton bind:evaluator bind:resetEvaluator bind:fileName={rawData.fileName} />
 		</div>
 	</div>
