@@ -1,7 +1,7 @@
 import * as d3 from 'd3';
 import type {GraphDataEdge, GraphDataNode} from '$types';
 import {notNaN} from '$helper';
-import {checkWidthHeight, filterEdges} from './helpers';
+import {centerize, checkWidthHeight, filterEdges} from './helpers';
 import type {NodeLayout} from './types';
 
 export const forceBasedLayout: NodeLayout = function (drawSettings, childNodes, parentNode) {
@@ -35,22 +35,14 @@ export const forceBasedLayout: NodeLayout = function (drawSettings, childNodes, 
 	simulation.stop();
 
 	// set parent dimensions
+	const {width, height} = centerize(childNodes);
 	if (parentNode) {
-		const width =
-			2 *
-			(Math.max(
-				0.5 * drawSettings.minimumNodeSize,
-				...childNodes.map(node => Math.abs(node.x!) + 0.5 * node.width!),
-			) +
-				drawSettings.nodePadding);
-		const height =
-			2 *
-			(Math.max(
-				0.5 * drawSettings.minimumNodeSize,
-				...childNodes.map(node => Math.abs(node.y!) + 0.5 * node.height!),
-			) +
-				drawSettings.nodePadding);
-		parentNode.width = notNaN(width) + 2 * drawSettings.nodePadding;
-		parentNode.height = notNaN(height) + 2 * drawSettings.nodePadding;
+		parentNode.width = width + 2 * drawSettings.nodePadding;
+		parentNode.height = height + 2 * drawSettings.nodePadding;
+	} else {
+		childNodes.forEach(n => {
+			n.x! += 0.5 * width;
+			n.y! += 0.5 * height;
+		});
 	}
 };

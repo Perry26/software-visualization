@@ -1,3 +1,4 @@
+import {notNaN} from '$helper';
 import {
 	EdgeType,
 	type DrawSettingsInterface,
@@ -52,6 +53,7 @@ export function checkWidthHeight(nodes: GraphDataNode[]): GraphDataNodeExt[] {
 	//@ts-expect-error Values can now not be undefined
 	return nodes;
 }
+
 /** Helper function for layout algorithms
  * Given a list of nodes, reposition them such that the nodes are centered around the point 0,0.
  *
@@ -82,7 +84,7 @@ export function centerize(nodes: GraphDataNode[], edges?: GraphDataEdge[]) {
 	}
 
 	return {
-		width: 2 * centerX,
-		height: 2 * centerY,
+		width: notNaN(maxX - minX),
+		height: notNaN(maxY - minY),
 	};
 }
