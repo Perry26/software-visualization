@@ -31,6 +31,7 @@ export interface DrawSettingsInterface extends drawSettingsInterfaceDummy {
 	showEdgeLabels: boolean;
 	showEdgePorts: boolean;
 	colorFromBottom: boolean;
+	invertPortColors: boolean;
 	nodeDefaultColor: string;
 	nodeColors: string[];
 	/** Remembers the last transformation in-between redraws. */

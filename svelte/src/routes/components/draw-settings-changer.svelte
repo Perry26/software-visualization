@@ -213,5 +213,19 @@
 				{drawSettings.colorFromBottom ? 'From bottom' : 'From top'}
 			</Toggle>
 		</div>
+		<!-- Invert port colors -->
+		<div>
+			<Heading headingNumber={5}>Invert port levels</Heading>
+			<Toggle
+				class="ml-4"
+				onToggle={() => {
+					drawSettings.invertPortColors = !drawSettings.invertPortColors;
+					doRedraw = true;
+				}}
+				state={drawSettings.invertPortColors}
+			>
+				{drawSettings.invertPortColors ? 'Inverted' : 'Normal'}
+			</Toggle>
+		</div>
 	</div>
 </div>

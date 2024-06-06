@@ -60,6 +60,7 @@
 		showNodeLabels: true,
 		showEdgePorts: true,
 		colorFromBottom: true,
+		invertPortColors: false,
 		nodeDefaultColor: '#6a6ade',
 		nodeColors: ['#32a875', '#d46868'],
 		innerLayout: 'layerTree',
@@ -141,7 +142,6 @@
 			}
 
 			if (doRelayout) {
-				console.log(graphData);
 				// remove the old data
 				cleanCanvas(svgElement!);
 				redrawFunction = draw(

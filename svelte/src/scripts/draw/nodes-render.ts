@@ -193,8 +193,10 @@ export function renderPorts(
 			.attr('height', ({height}) => height)
 			.attr(
 				'fill',
-				drawSettings.nodeColors[drawSettings.colorFromBottom ? reverseLevel : level] ??
-					drawSettings.nodeDefaultColor,
+				// Option to invert port colors looks nice, though I cannot think of a single advantage xD
+				drawSettings.nodeColors[
+					drawSettings.colorFromBottom !== drawSettings.invertPortColors ? reverseLevel : level
+				] ?? drawSettings.nodeDefaultColor,
 			)
 			.attr('fill-opacity', '0.3');
 	});
