@@ -2,20 +2,26 @@ import * as d3 from 'd3';
 import type {GraphDataEdge} from '$types';
 import {centerize, checkWidthHeight, filterEdges} from './helpers';
 import type {GraphDataNodeExt, NodeLayout} from './types';
-import {Box} from '@flatten-js/core';
+import {Box, Polygon} from '@flatten-js/core';
 
 type forceLink = {
 	source: GraphDataNodeExt;
 	target: GraphDataNodeExt;
 };
 
+// Helper functions for typing
 function hasXY<T>(n: T): n is T & {x: number; y: number} {
 	//@ts-ignore
 	return !isNaN(n.x) && !isNaN(n.y);
 }
 
+function hasVxVy<T>(n: T): n is T & {vx: number; vy: number} {
+	//@ts-ignore
+	return !isNaN(n.vx) && !isNaN(n.vy);
+}
+
 /** Rectangle collision mechanism
- * (not actually a force, it just snaps nodes out of eachother to guarantee no overlap)
+ * (not actually a force, it just snaps nodes out of each-other to guarantee no overlap)
  */
 function rectangleCollideForce(): d3.Force<GraphDataNodeExt, undefined> {
 	let nodes: GraphDataNodeExt[];
@@ -65,6 +71,81 @@ function rectangleCollideForce(): d3.Force<GraphDataNodeExt, undefined> {
 	return force;
 }
 
+function rectangleManyBodyForce(): d3.ForceManyBody<GraphDataNodeExt> {
+	let nodes: GraphDataNodeExt[];
+	let strength = function (_: GraphDataNodeExt) {
+		return -30;
+	};
+	let distanceMin = 1;
+	let distanceMax = Infinity;
+
+	function force(_alpha: number) {
+		for (let i = 0; i < nodes.length; i++) {
+			for (let j = i + 1; j < nodes.length; j++) {
+				const n1 = nodes[i];
+				const n2 = nodes[j];
+
+				if (hasXY(n1) && hasXY(n2) && hasVxVy(n1) && hasVxVy(n2)) {
+					// Set up flatten-js to get the distance between 2 squares
+					const polygon1 = new Polygon(
+						new Box(
+							n1.x - 0.5 * n1.width,
+							n1.y - 0.5 * n1.height,
+							n1.x + 0.5 * n1.width,
+							n1.y + 0.5 * n1.height,
+						),
+					);
+					const polygon2 = new Polygon(
+						new Box(
+							n2.x - 0.5 * n2.width,
+							n2.y - 0.5 * n2.height,
+							n2.x + 0.5 * n2.width,
+							n2.y + 0.5 * n2.height,
+						),
+					);
+					const [distance, distanceSegment] = polygon1.distanceTo(polygon2);
+
+					if (distanceMin < distance && distance < distanceMax) {
+						// Below variables contain unit-vectors
+						const tangent2 = distanceSegment.tangentInStart();
+						const tangent1 = distanceSegment.tangentInEnd();
+
+						// Finally, modify the velocity of the nodes
+						const distanceInv = 1 / distance;
+						const strength1 = strength(n1) * distanceInv;
+						const strength2 = strength(n2) * distanceInv;
+						n1.vx += tangent1.x * strength1;
+						n1.vy += tangent1.y * strength1;
+						n2.vx += tangent2.x * strength2;
+						n2.vy += tangent2.y * strength2;
+					}
+				}
+			}
+		}
+	}
+
+	force.initialize = function (_nodes: GraphDataNodeExt[]) {
+		nodes = _nodes;
+	};
+
+	force.strength = function (func: (d: GraphDataNodeExt) => number) {
+		strength = func;
+	};
+
+	force.distanceMin = function (n: number) {
+		distanceMin = n;
+	};
+
+	force.distanceMax = function (n: number) {
+		distanceMax = n;
+	};
+
+	force.theta = function (_n: number) {};
+
+	//@ts-ignore
+	return force;
+}
+
 export const forceBasedLayout: NodeLayout = function (drawSettings, childNodes, parentNode) {
 	const nodes = checkWidthHeight(childNodes);
 
@@ -82,7 +163,10 @@ export const forceBasedLayout: NodeLayout = function (drawSettings, childNodes, 
 	const simulation = d3.forceSimulation<GraphDataNodeExt, forceLink>(nodes);
 	simulation.force(
 		'charge',
-		d3.forceManyBody<GraphDataNodeExt>().strength(d => {
+		//prettier-ignore
+		d3.forceManyBody<GraphDataNodeExt>()
+		//rectangleManyBodyForce()
+		.strength(d => {
 			return d.width! + d.height! * -30;
 		}),
 	);
