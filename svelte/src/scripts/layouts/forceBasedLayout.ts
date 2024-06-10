@@ -179,7 +179,7 @@ export const forceBasedLayout: NodeLayout = function (drawSettings, childNodes, 
 	drawSettings.layoutSettings.centerForceStrength.enabled &&
 		simulation.force('x', d3.forceX(0).strength(drawSettings.layoutSettings.centerForceStrength.x));
 	drawSettings.layoutSettings.centerForceStrength.enabled &&
-		simulation.force('y', d3.forceY(drawSettings.layoutSettings.centerForceStrength.y));
+		simulation.force('y', d3.forceY(0).strength(drawSettings.layoutSettings.centerForceStrength.y));
 	drawSettings.layoutSettings.linkForce.enabled &&
 		simulation.force(
 			'link',

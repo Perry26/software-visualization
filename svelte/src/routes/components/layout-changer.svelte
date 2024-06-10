@@ -1,7 +1,12 @@
 <script lang="ts">
 	import Toggle from '$ui/toggle.svelte';
 	import Heading from '$ui/heading.svelte';
-	import type {DrawSettingsInterface, LayoutOptions} from '$types';
+	import type {
+		DrawSettingsInterface,
+		LayoutNestingLevels,
+		LayoutOptions,
+		ManyBodyForceOptions,
+	} from '$types';
 	import Input from '$ui/input.svelte';
 	import Button from '$ui/button.svelte';
 	export let drawSettings: DrawSettingsInterface;
@@ -9,6 +14,8 @@
 
 	// layout options
 	let options: LayoutOptions[] = ['layerTree', 'straightTree', 'circular', 'forceBased'];
+	let layoutNestingLevels: LayoutNestingLevels[] = ['inner', 'intermediate', 'root'];
+	let manyBodyForceOptions: ManyBodyForceOptions[] = ['Charge', 'Rectangular', 'None'];
 </script>
 
 <div class="overflow-auto">
@@ -66,100 +73,153 @@
 
 	<!-- layout settings -->
 	<div>
-		<Heading headingNumber={5}>Inner Layout</Heading>
-
-		<select
-			bind:value={drawSettings.innerLayout}
-			on:change={() => {
-				doRelayout = true;
-			}}
-		>
-			{#each options as value}<option {value}>{value}</option>{/each}
-		</select>
-		Layout algorithm
-		<br />
-		<Input
-			type="number"
-			value={drawSettings.nodeMargin.inner}
-			onChange={e => {
-				drawSettings.nodeMargin.inner = Number(e.currentTarget.value);
-				doRelayout = true;
-			}}
-		/> Node Margin
-		<Toggle
-			class="ml-4"
-			onToggle={() => {
-				drawSettings.layoutSettings.inner.uniformSize =
-					!drawSettings.layoutSettings.inner.uniformSize;
-				doRelayout = true;
-			}}
-			state={drawSettings.layoutSettings.inner.uniformSize}
-			disabled={!['layerTree', 'straightTree'].includes(drawSettings.innerLayout)}
-			>Uniform node sizes</Toggle
-		>
-		<Heading headingNumber={5}>Intermediate Layout</Heading>
-
-		<select
-			bind:value={drawSettings.intermediateLayout}
-			on:change={() => {
-				doRelayout = true;
-			}}
-		>
-			{#each options as value}<option {value}>{value}</option>{/each}
-		</select>
-		Layout algorithm
-		<br />
-		<Input
-			type="number"
-			value={drawSettings.nodeMargin.intermediate}
-			onChange={e => {
-				drawSettings.nodeMargin.intermediate = Number(e.currentTarget.value);
-				doRelayout = true;
-			}}
-		/> Node Margin
-
-		<Toggle
-			class="ml-4"
-			onToggle={() => {
-				drawSettings.layoutSettings.intermediate.uniformSize =
-					!drawSettings.layoutSettings.intermediate.uniformSize;
-				doRelayout = true;
-			}}
-			state={drawSettings.layoutSettings.intermediate.uniformSize}
-			disabled={!['layerTree', 'straightTree'].includes(drawSettings.intermediateLayout)}
-			>Uniform node sizes</Toggle
-		>
-
-		<Heading headingNumber={5}>Root Layout</Heading>
-
-		<select
-			bind:value={drawSettings.rootLayout}
-			on:change={() => {
-				doRelayout = true;
-			}}
-		>
-			{#each options as value}<option {value}>{value}</option>{/each}
-		</select>
-		Layout algorithm
-		<br />
-		<Input
-			type="number"
-			value={drawSettings.nodeMargin.root}
-			onChange={e => {
-				drawSettings.nodeMargin.root = Number(e.currentTarget.value);
-				doRelayout = true;
-			}}
-		/> Node Margin
-		<Toggle
-			class="ml-4"
-			onToggle={() => {
-				drawSettings.layoutSettings.root.uniformSize =
-					!drawSettings.layoutSettings.root.uniformSize;
-				doRelayout = true;
-			}}
-			state={drawSettings.layoutSettings.root.uniformSize}
-			disabled={!['layerTree', 'straightTree'].includes(drawSettings.rootLayout)}
-			>Uniform node sizes</Toggle
-		>
+		{#each layoutNestingLevels as level}
+			<div class="bg-slate-100 rounded-md p-4 mb-4 mr-8 ml-0">
+				<Heading headingNumber={5}>{level.charAt(0).toUpperCase() + level.slice(1)} Layout</Heading>
+				<select
+					bind:value={drawSettings[`${level}Layout`]}
+					on:change={() => {
+						doRelayout = true;
+					}}
+				>
+					{#each options as value}<option {value}>{value}</option>{/each}
+				</select>
+				Layout algorithm
+				<br />
+				<Input
+					type="number"
+					value={drawSettings.nodeMargin[level]}
+					onChange={e => {
+						drawSettings.nodeMargin[level] = Number(e.currentTarget.value);
+						doRelayout = true;
+					}}
+				/> Node Margin <br />
+				{#if ['layerTree', 'straightTree'].includes(drawSettings[`${level}Layout`])}
+					<div class="h-4" />
+					<Toggle
+						class="ml-4"
+						onToggle={() => {
+							drawSettings.layoutSettings[level].uniformSize =
+								!drawSettings.layoutSettings[level].uniformSize;
+							doRelayout = true;
+						}}
+						state={drawSettings.layoutSettings[level].uniformSize}>Uniform node sizes</Toggle
+					>
+				{/if}
+				{#if ['forceBased'].includes(drawSettings[`${level}Layout`])}
+					<div class="h-4" />
+					<em>Many body force <br /></em>
+					<select
+						bind:value={drawSettings.layoutSettings[level].manyBodyForce.type}
+						on:change={() => {
+							doRelayout = true;
+						}}
+					>
+						{#each manyBodyForceOptions as value}<option {value}>{value}</option>{/each}
+					</select>
+					Type
+					<br />
+					<Input
+						type="number"
+						value={drawSettings.layoutSettings[level].manyBodyForce.strength}
+						onChange={e => {
+							drawSettings.layoutSettings[level].manyBodyForce.strength = Number(
+								e.currentTarget.value,
+							);
+							doRelayout = true;
+						}}
+						disabled={drawSettings.layoutSettings[level].manyBodyForce.type === 'None'}
+						min={-50}
+						max={50}
+					/> Strength<br />
+					<div class="h-4" />
+					<em>Undo rectangle collision at every tick<br /></em>
+					<Toggle
+						class="ml-4"
+						onToggle={() => {
+							drawSettings.layoutSettings[level].collideRectangles =
+								!drawSettings.layoutSettings[level].collideRectangles;
+							doRelayout = true;
+						}}
+						state={drawSettings.layoutSettings[level].collideRectangles}
+					/>
+					<div class="h-4" />
+					<em>Center force <br /></em>
+					<Toggle
+						class="ml-4"
+						onToggle={() => {
+							drawSettings.layoutSettings[level].centerForceStrength.enabled =
+								!drawSettings.layoutSettings[level].centerForceStrength.enabled;
+							doRelayout = true;
+						}}
+						state={drawSettings.layoutSettings[level].centerForceStrength.enabled}
+					>
+						Enabled
+					</Toggle>
+					<Input
+						type="number"
+						value={drawSettings.layoutSettings[level].centerForceStrength.x}
+						onChange={e => {
+							drawSettings.layoutSettings[level].centerForceStrength.x = Number(
+								e.currentTarget.value,
+							);
+							doRelayout = true;
+						}}
+						disabled={!drawSettings.layoutSettings[level].centerForceStrength.enabled}
+						step={0.1}
+						min={-50}
+						max={50}
+					/> x-strength<br />
+					<Input
+						type="number"
+						value={drawSettings.layoutSettings[level].centerForceStrength.y}
+						onChange={e => {
+							drawSettings.layoutSettings[level].centerForceStrength.y = Number(
+								e.currentTarget.value,
+							);
+							doRelayout = true;
+						}}
+						disabled={!drawSettings.layoutSettings[level].centerForceStrength.enabled}
+						step={0.1}
+						min={-50}
+						max={50}
+					/> y-strength<br />
+					<div class="h-4" />
+					<em>Link force <br /></em>
+					<Toggle
+						class="ml-4"
+						onToggle={() => {
+							drawSettings.layoutSettings[level].linkForce.enabled =
+								!drawSettings.layoutSettings[level].linkForce.enabled;
+							doRelayout = true;
+						}}
+						state={drawSettings.layoutSettings[level].linkForce.enabled}
+					>
+						Enabled
+					</Toggle>
+					<Input
+						type="number"
+						value={drawSettings.layoutSettings[level].linkForce.distance}
+						onChange={e => {
+							drawSettings.layoutSettings[level].linkForce.distance = Number(e.currentTarget.value);
+							doRelayout = true;
+						}}
+						disabled={!drawSettings.layoutSettings[level].linkForce.enabled}
+					/> Distance<br />
+					<Input
+						type="number"
+						value={drawSettings.layoutSettings[level].linkForce.strength}
+						onChange={e => {
+							drawSettings.layoutSettings[level].linkForce.strength = Number(e.currentTarget.value);
+							doRelayout = true;
+						}}
+						disabled={!drawSettings.layoutSettings[level].linkForce.enabled}
+						step={0.1}
+						min={-50}
+						max={50}
+					/> Strength<br />
+				{/if}
+			</div>
+		{/each}
 	</div>
 </div>
