@@ -15,6 +15,7 @@ export interface ConfigInterface {
 /** Just to guarantee that the types DrawSettingsInterface and LayoutNestingLevels cannot get 'out of sync' */
 interface drawSettingsInterfaceDummy {
 	nodeMargin: {[id in LayoutNestingLevels]: number};
+	layoutSettings: {[id in LayoutNestingLevels]: LayoutSettingsType};
 }
 
 export interface DrawSettingsInterface extends drawSettingsInterfaceDummy {
@@ -53,6 +54,8 @@ export interface RawDataConfigType {
 }
 
 export type LayoutOptions = 'layerTree' | 'circular' | 'straightTree' | 'forceBased';
+
+export type ManyBodyForceOptions = 'Charge' | 'Rectangular' | 'None';
 
 export type LayoutNestingLevels = 'inner' | 'intermediate' | 'root';
 

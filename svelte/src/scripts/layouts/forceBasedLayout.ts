@@ -161,30 +161,39 @@ export const forceBasedLayout: NodeLayout = function (drawSettings, childNodes, 
 
 	// Make and run simulation
 	const simulation = d3.forceSimulation<GraphDataNodeExt, forceLink>(nodes);
-	simulation.force(
-		'charge',
-		//prettier-ignore
-		d3.forceManyBody<GraphDataNodeExt>()
-		//rectangleManyBodyForce()
-		.strength(d => {
-			return d.width! + d.height! * -30;
-		}),
-	);
-	simulation.force('collide', rectangleCollideForce());
-	simulation.force('x', d3.forceX(0));
-	simulation.force('y', d3.forceY(0));
-	simulation.force(
-		'link',
-		d3
-			.forceLink<GraphDataNodeExt, forceLink>(copyLinks)
-			.id(n => n.id)
-			.distance(
-				({source, target}) =>
-					30 +
-					Math.sqrt(source.width * source.width + source.height * source.height) +
-					Math.sqrt(target.width * target.width + target.height * target.height),
-			),
-	);
+
+	drawSettings.layoutSettings.manyBodyForce.type !== 'None' &&
+		simulation.force(
+			'charge',
+			(drawSettings.layoutSettings.manyBodyForce.type === 'Charge'
+				? d3.forceManyBody<GraphDataNodeExt>()
+				: drawSettings.layoutSettings.manyBodyForce.type === 'Rectangular'
+				? rectangleManyBodyForce()
+				: undefined)!.strength(d => {
+				return d.width! + d.height! * -drawSettings.layoutSettings.manyBodyForce.strength;
+			}),
+		);
+	drawSettings.layoutSettings.collideRectangles &&
+		simulation.force('collide', rectangleCollideForce());
+
+	drawSettings.layoutSettings.centerForceStrength.enabled &&
+		simulation.force('x', d3.forceX(0).strength(drawSettings.layoutSettings.centerForceStrength.x));
+	drawSettings.layoutSettings.centerForceStrength.enabled &&
+		simulation.force('y', d3.forceY(drawSettings.layoutSettings.centerForceStrength.y));
+	drawSettings.layoutSettings.linkForce.enabled &&
+		simulation.force(
+			'link',
+			d3
+				.forceLink<GraphDataNodeExt, forceLink>(copyLinks)
+				.id(n => n.id)
+				.distance(
+					({source, target}) =>
+						drawSettings.layoutSettings.linkForce.distance +
+						Math.sqrt(source.width * source.width + source.height * source.height) +
+						Math.sqrt(target.width * target.width + target.height * target.height),
+				)
+				.strength(drawSettings.layoutSettings.linkForce.strength),
+		);
 	simulation.tick(300);
 	simulation.stop();
 

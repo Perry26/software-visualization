@@ -67,9 +67,57 @@
 		intermediateLayout: 'layerTree',
 		rootLayout: 'layerTree',
 		layoutSettings: {
-			inner: {uniformSize: true},
-			intermediate: {uniformSize: true},
-			root: {uniformSize: true},
+			inner: {
+				uniformSize: true,
+				manyBodyForce: {
+					type: 'Rectangular',
+					strength: 30,
+				},
+				collideRectangles: true,
+				centerForceStrength: {
+					enabled: true,
+					x: 0.1,
+					y: 0.1,
+				},
+				linkForce: {
+					enabled: true,
+					distance: 30,
+					strength: 1,
+				},
+			},
+			intermediate: {
+				uniformSize: true,
+				manyBodyForce: {type: 'Rectangular', strength: 30},
+				collideRectangles: true,
+				centerForceStrength: {
+					enabled: true,
+					x: 0.1,
+					y: 0.1,
+				},
+				linkForce: {
+					enabled: true,
+					distance: 30,
+					strength: 1,
+				},
+			},
+			root: {
+				uniformSize: true,
+				manyBodyForce: {
+					type: 'Rectangular',
+					strength: 30,
+				},
+				collideRectangles: true,
+				centerForceStrength: {
+					enabled: true,
+					x: 0.1,
+					y: 0.1,
+				},
+				linkForce: {
+					enabled: true,
+					distance: 30,
+					strength: 1,
+				},
+			},
 		},
 	};
 
