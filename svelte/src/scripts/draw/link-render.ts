@@ -1,5 +1,5 @@
 import {distance, geometricMean, notNaN, toHTMLToken} from '$helper';
-import {getAbsCoordinates} from '$helper/graphdata-helpers';
+import {getAbsCoordinates, getNode} from '$helper/graphdata-helpers';
 import type {
 	DrawSettingsInterface,
 	EdgeRoutingOrigin,
@@ -76,7 +76,8 @@ export function renderLinks(
 	 *
 	 * Routes edges through edge port
 	 */
-	function annotateLinePorts(l: GraphDataEdge) {
+	function annotateLine(l: GraphDataEdge, intersection = false) {
+		// calculateIntersection
 		const source = (
 			typeof l.source === 'string' ? nodesDictionary[l.source] : l.source
 		) as GraphDataNodeDrawn;
@@ -87,7 +88,7 @@ export function renderLinks(
 		l.gradientDirection = source.x! > target.x!;
 
 		/** List of all coordinates the path will need to go through */
-		let coordinates = [
+		l.renderPoints = [
 			...l.routing.map(point => {
 				const {x, y} = getAbsCoordinates(point.origin);
 				return {
@@ -97,58 +98,26 @@ export function renderLinks(
 			}),
 		];
 
-		if (coordinates.length < 2) {
-			coordinates = [source, target];
+		if (l.renderPoints.length < 2) {
+			l.renderPoints = [source, target];
 		}
-		l.renderPoints = coordinates;
 
-		l.labelCoordinates = [coordinates[0], coordinates[1]];
+		// TODO fix error in  calculateIntersection
+		// if (intersection) {
+		// 	const t = calculateIntersection(l.renderPoints[0], l.renderPoints[l.renderPoints.length - 1]);
+		// 	l.renderPoints[0] = t.intersectionSource;
+		// 	l.renderPoints[l.renderPoints.length - 1] = t.intersectionTarget;
+		// }
 
-		// TODO find right coordinates (Put on the longest stretch)
-		let result = `M ${coordinates[0].x} ${coordinates[0].y}`;
+		l.labelCoordinates = [l.renderPoints[0], l.renderPoints[1]];
 
-		coordinates.forEach(({x, y}) => {
+		let result = `M ${l.renderPoints[0].x} ${l.renderPoints[0].y}`;
+
+		l.renderPoints.forEach(({x, y}) => {
 			result += `L ${x} ${y} `;
 		});
 
 		return result;
-	}
-
-	/** Returns path coordinates, and annotates the line-data with extra info
-	 *
-	 * (No edge ports)
-	 */
-	function annotateLine(l: GraphDataEdge) {
-		const source = (
-			typeof l.source === 'string' ? nodesDictionary[l.source] : l.source
-		) as GraphDataNodeDrawn;
-		const target = (
-			typeof l.target === 'string' ? nodesDictionary[l.target] : l.target
-		) as GraphDataNodeDrawn;
-
-		const sourceAbsoluteCoordinate = getAbsCoordinates(source);
-		const targetAbsoluteCoordinate = getAbsCoordinates(target);
-
-		const {intersectionSource: s, intersectionTarget: t} = calculateIntersection(
-			{
-				x: sourceAbsoluteCoordinate.x,
-				y: sourceAbsoluteCoordinate.y,
-				width: source.width!,
-				height: source.height!,
-			},
-			{
-				x: targetAbsoluteCoordinate.x,
-				y: targetAbsoluteCoordinate.y,
-				width: target.width!,
-				height: target.height!,
-			},
-		);
-
-		l.gradientDirection = s.x! > t.x!;
-		l.labelCoordinates = [s, t];
-		l.renderPoints = [s, t];
-
-		return `M ${s.x} ${s.y} L ${t.x} ${t.y} `;
 	}
 
 	// Enter
@@ -161,7 +130,17 @@ export function renderLinks(
 		.enter()
 		.append('path')
 		.attr('id', l => `line-${toHTMLToken(l.id)}`)
-		.attr('d', l => (drawSettings.showEdgePorts ? annotateLinePorts(l) : annotateLine(l)))
+		.attr('d', l => {
+			if (drawSettings.showEdgePorts) {
+				return annotateLine(l);
+			} else {
+				l.routing = [
+					{x: 0, y: 0, origin: getNode(l.source, nodesDictionary) as EdgeRoutingOrigin},
+					{x: 0, y: 0, origin: getNode(l.target, nodesDictionary) as EdgeRoutingOrigin},
+				];
+				return annotateLine(l, true);
+			}
+		})
 		.attr(
 			'stroke',
 			l => `url(#${toHTMLToken(l.type)}Gradient${l.gradientDirection ? 'Reversed' : ''})`,
@@ -178,7 +157,7 @@ export function renderLinks(
 			unknown
 		>
 	)
-		.attr('d', annotateLinePorts)
+		.attr('d', l => annotateLine(l, !drawSettings.showEdgePorts))
 		.attr(
 			'stroke',
 			l => `url(#${toHTMLToken(l.type)}Gradient${l.gradientDirection ? 'Reversed' : ''})`,
