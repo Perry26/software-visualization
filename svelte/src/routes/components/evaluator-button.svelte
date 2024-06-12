@@ -10,6 +10,7 @@
 	export let fileName: string | undefined;
 	let copyString: string | undefined = undefined;
 	let tableString : string = '';
+	export let padding: number;
 
 	function runEvaluator() {
 		if (!evaluator) {
@@ -47,8 +48,8 @@
 		const content = document.getElementById("canvas")!.innerHTML;
 		const {maxX, minX, maxY, minY} = evaluator!.getBoundaries();
 
-		const string = `<svg viewBox="${minX}, ${minY}, ${maxX - minX}, ${maxY - minY}" style="background-color: white" xmlns="http://www.w3.org/2000/svg">` 
-			+ `<rect x="${minX}" y="${minY}" width="${maxX - minX}" height="${maxY - minY}" fill="white" />`
+		const string = `<svg viewBox="${minX - padding}, ${minY - padding}, ${maxX - minX + 2 * padding}, ${maxY - minY + 2 * padding}" style="background-color: white" xmlns="http://www.w3.org/2000/svg">` 
+			+ `<rect x="${minX - padding - 1}" y="${minY - padding - 1}" width="${maxX - minX + 2 * padding + 2}" height="${maxY - minY + 2 * padding + 2}" fill="white" />`
 			+ content 
 			+ "</svg>"
 		saveStringToFile(string, 'text/svg', 'svg')

@@ -278,7 +278,12 @@
 			class="overflow-y-auto overflow-x-auto"
 			style="display: {sidePanelTab === SidePanelTab.Evaluation ? 'block' : 'none'}"
 		>
-			<EvaluationButton bind:evaluator bind:resetEvaluator bind:fileName={rawData.fileName} />
+			<EvaluationButton
+				bind:padding={drawSettings.nodePadding}
+				bind:evaluator
+				bind:resetEvaluator
+				bind:fileName={rawData.fileName}
+			/>
 		</div>
 	</div>
 </div>

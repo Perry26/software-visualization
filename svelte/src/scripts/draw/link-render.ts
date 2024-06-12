@@ -145,7 +145,7 @@ export function renderLinks(
 			'stroke',
 			l => `url(#${toHTMLToken(l.type)}Gradient${l.gradientDirection ? 'Reversed' : ''})`,
 		)
-		.attr('fill', 'transparent')
+		.attr('fill', 'none')
 		.on('mouseover', (e, d) => {});
 
 	// Update
