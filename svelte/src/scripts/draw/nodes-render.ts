@@ -173,18 +173,18 @@ export function renderPorts(
 			unknown
 		>
 	).each(function ({id, level, reverseLevel}) {
-		d3.select(this)
-			.selectAll('rect.port')
-			.data(
-				portMap[id].filter(({types}) => {
-					for (const [edgeType, show] of drawSettings.shownEdgesType) {
-						if (show && types.has(edgeType)) {
-							return true;
-						}
-					}
-					return false;
-				}),
-			)
+		const portMapFiltered = portMap[id].filter(({types}) => {
+			for (const [edgeType, show] of drawSettings.shownEdgesType) {
+				if (show && types.has(edgeType)) {
+					return true;
+				}
+			}
+			return false;
+		});
+		const sel = d3
+			.select(this)
+			.selectAll(':scope > rect.port')
+			.data(portMapFiltered)
 			.join('rect')
 			.attr('class', 'port')
 			.attr('x', ({x, width}) => x - 0.5 * width)
