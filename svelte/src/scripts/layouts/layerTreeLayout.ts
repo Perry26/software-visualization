@@ -10,6 +10,10 @@ import type {NodeLayout, GraphDataNodeExt} from './types.ts';
 export const layerTreeLayout: NodeLayout = function (drawSettings, childNodes, parentNode?) {
 	if (childNodes.length === 0) return;
 
+	if (!checkWidthHeight(childNodes)) {
+		throw new Error('unreachable');
+	}
+
 	/**
 	 * Apply the Sugiyama method:
 	 * 1. Discard edges until the graph is a DAG (implemented as finding a spanning DAG instead)
@@ -25,7 +29,7 @@ export const layerTreeLayout: NodeLayout = function (drawSettings, childNodes, p
 		columnWidth?: number;
 	};
 	/** Same as childNodes, but cast to the right type */
-	const nodes = checkWidthHeight(childNodes) as LayerTreeNode[];
+	const nodes = childNodes as LayerTreeNode[];
 
 	/** Set containing all lifted edges between elements of childNodes */
 	const allEdges: Set<GraphDataEdge> = new Set();

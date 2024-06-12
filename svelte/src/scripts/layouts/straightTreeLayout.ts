@@ -5,7 +5,10 @@ import type {TreeNode, NodeLayout} from './types';
 function discoverTree(graphNodes: GraphDataNode[]) {
 	// Initialize the nodes, and augment their datatype
 	// The next property holds the next nodes in tree-structure
-	const nodes = checkWidthHeight(graphNodes) as TreeNode[];
+	if (!checkWidthHeight(graphNodes)) {
+		throw new Error('unreachable');
+	}
+	const nodes = graphNodes as TreeNode[];
 	nodes.forEach(n => (n.next = []));
 
 	// Function (and type) to find the next root node (via reduce)

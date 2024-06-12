@@ -147,7 +147,10 @@ function rectangleManyBodyForce(): d3.ForceManyBody<GraphDataNodeExt> {
 }
 
 export const forceBasedLayout: NodeLayout = function (drawSettings, childNodes, parentNode) {
-	const nodes = checkWidthHeight(childNodes);
+	if (!checkWidthHeight(childNodes)) {
+		throw new Error('unreachable');
+	}
+	const nodes = childNodes;
 
 	// collect relevant edges
 	const allLinks = new Set<GraphDataEdge>();

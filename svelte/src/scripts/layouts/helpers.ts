@@ -29,7 +29,7 @@ export const filterEdges = (l: GraphDataEdge) => {
  * Returns the same object but with different type.
  */
 
-export function checkWidthHeight(nodes: GraphDataNode[]): GraphDataNodeExt[] {
+export function checkWidthHeight(nodes: GraphDataNode[]): nodes is GraphDataNodeExt[] {
 	nodes.forEach(n => {
 		if (!n.width || !n.height) {
 			console.log({node: n});
@@ -50,8 +50,7 @@ export function checkWidthHeight(nodes: GraphDataNode[]): GraphDataNodeExt[] {
 		}
 	});
 
-	//@ts-expect-error Values can now not be undefined
-	return nodes;
+	return true;
 }
 
 /** Helper function for layout algorithms

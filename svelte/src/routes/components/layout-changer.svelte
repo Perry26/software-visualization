@@ -14,7 +14,7 @@
 
 	// layout options
 	let options: LayoutOptions[] = ['layerTree', 'straightTree', 'circular', 'forceBased'];
-	let layoutNestingLevels: LayoutNestingLevels[] = ['inner', 'intermediate', 'root'];
+	let layoutNestingLevels: LayoutNestingLevels[] = ['root', 'intermediate', 'inner'];
 	let manyBodyForceOptions: ManyBodyForceOptions[] = ['Charge', 'Rectangular', 'None'];
 </script>
 
