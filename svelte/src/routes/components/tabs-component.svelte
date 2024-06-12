@@ -17,7 +17,7 @@
 </script>
 
 <ul
-	class="hidden text-sm font-medium text-center text-gray-500 rounded-lg shadow sm:flex dark:divide-gray-700 dark:text-gray-400"
+	class="hidden text-sm font-medium text-center text-gray-500 rounded-lg shadow sm:flex dark:divide-gray-700 dark:text-gray-400 overflow-x-auto"
 >
 	{#each tabs as tab, i}
 		<li class="w-full focus-within:z-10">

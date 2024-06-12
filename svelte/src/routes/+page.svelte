@@ -133,6 +133,11 @@
 
 	let maximumDepth: number = 0;
 
+	// Resizing the sidebar
+	let clientSidebarWidth: number;
+	let clientXPos: number = NaN;
+	let forcedSidebarWidth: number | undefined = undefined;
+
 	function handleNodeCollapseClick(clickedNode: GraphDataNode) {
 		debuggingConsole('clicked');
 		// push if not exist
@@ -215,46 +220,62 @@
 	});
 </script>
 
-<div class="flex justify-between h-full">
+<div class="flex justify-between h-screen">
 	<!-- canvas -->
 	<div class="m-6 w-full">
 		<svg bind:this={svgElement} class="w-full h-full" />
 	</div>
 
 	<!-- vertical line -->
-	<div class="bg-neutral-300 w-[2px]" />
+	<div
+		class="bg-neutral-300 w-[2px] hover:cursor-col-resize"
+		draggable="true"
+		role="none"
+		on:dragstart={e => {
+			forcedSidebarWidth ??= clientSidebarWidth;
+			clientXPos = e.clientX;
+		}}
+		on:drag={e => {
+			if (e.clientX != 0 && forcedSidebarWidth) {
+				const dX = e.clientX - clientXPos;
+				forcedSidebarWidth = forcedSidebarWidth - 2 * dX;
+				clientXPos = e.clientX;
+			}
+		}}
+		on:dragend={_ => {}}
+	/>
 
 	<!-- sidepanel -->
-	<div class="flex flex-col m-6">
+	<div class="m-6" style="width: {forcedSidebarWidth}px" bind:clientWidth={clientSidebarWidth}>
 		<TabsComponent bind:sidePanelTab />
 		<br />
 
 		<div
-			class="overflow-y-auto overflow-x-hidden"
+			class="overflow-y-auto overflow-x-auto"
 			style="display: {sidePanelTab === SidePanelTab.Input ? 'block' : 'none'}"
 		>
 			<RawDataInputer bind:rawData bind:doReconvert bind:rawDataConfig />
 		</div>
 		<div
-			class="overflow-y-auto overflow-x-hidden"
+			class="overflow-y-auto overflow-x-auto"
 			style="display: {sidePanelTab === SidePanelTab.Config ? 'block' : 'none'}"
 		>
 			<ConfigChanger bind:config bind:doRefilter bind:flattenNodes />
 		</div>
 		<div
-			class="overflow-y-auto overflow-x-hidden"
+			class="overflow-y-auto overflow-x-auto"
 			style="display: {sidePanelTab === SidePanelTab.DrawSettings ? 'block' : 'none'}"
 		>
 			<DrawSettingsChanger bind:drawSettings bind:doRedraw bind:maximumDepth />
 		</div>
 		<div
-			class="overflow-y-auto overflow-x-hidden"
+			class="overflow-y-auto overflow-x-auto"
 			style="display: {sidePanelTab === SidePanelTab.Layout ? 'block' : 'none'}"
 		>
 			<LayoutChanger bind:drawSettings bind:doRelayout />
 		</div>
 		<div
-			class="overflow-y-auto overflow-x-hidden"
+			class="overflow-y-auto overflow-x-auto"
 			style="display: {sidePanelTab === SidePanelTab.Evaluation ? 'block' : 'none'}"
 		>
 			<EvaluationButton bind:evaluator bind:resetEvaluator bind:fileName={rawData.fileName} />
