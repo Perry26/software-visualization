@@ -210,6 +210,6 @@ export class LayoutMetrics {
 		}, '');
 
 		// Return results
-		return {copyString, tableString};
+		return {copyString, tableString, rawData: arr};
 	}
 }
