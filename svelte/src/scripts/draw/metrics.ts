@@ -50,7 +50,7 @@ function lineAngle(a: Segment, b: Segment) {
 }
 
 export class LayoutMetrics {
-	data?: GraphData;
+	private data?: GraphData;
 
 	setData(d: GraphData) {
 		this.data = d;
@@ -146,25 +146,8 @@ export class LayoutMetrics {
 		});
 
 		// Area metrics:
-		const minX = this.data.nodes.reduce(
-			(acc, node) => Math.min(node.x! - 0.5 * node.width!, acc),
-			Infinity,
-		);
-		const minY = this.data.nodes.reduce(
-			(acc, node) => Math.min(node.y! - 0.5 * node.height!, acc),
-			Infinity,
-		);
-		const maxX = this.data.nodes.reduce(
-			(acc, node) => Math.min(node.x! + 0.5 * node.width!, acc),
-			Infinity,
-		);
-		const maxY = this.data.nodes.reduce(
-			(acc, node) => Math.min(node.y! + 0.5 * node.height!, acc),
-			Infinity,
-		);
-
+		const {maxX, minX, maxY, minY} = this.getBoundaries();
 		const area = Math.abs(maxX - minX) * Math.abs(maxY - minY);
-
 		const aspectRatio = Math.abs(maxX - minX) / Math.abs(maxY - minY);
 
 		// Orthogonality metrics
@@ -211,5 +194,29 @@ export class LayoutMetrics {
 
 		// Return results
 		return {copyString, tableString};
+	}
+
+	getBoundaries() {
+		if (!this.data) {
+			throw new Error('Data for evaluator not found');
+		}
+
+		const minX = this.data.nodes.reduce(
+			(acc, node) => Math.min(node.x! - 0.5 * node.width!, acc),
+			Infinity,
+		);
+		const minY = this.data.nodes.reduce(
+			(acc, node) => Math.min(node.y! - 0.5 * node.height!, acc),
+			Infinity,
+		);
+		const maxX = this.data.nodes.reduce(
+			(acc, node) => Math.max(node.x! + 0.5 * node.width!, acc),
+			-Infinity,
+		);
+		const maxY = this.data.nodes.reduce(
+			(acc, node) => Math.max(node.y! + 0.5 * node.height!, acc),
+			-Infinity,
+		);
+		return {maxX, minX, maxY, minY};
 	}
 }
