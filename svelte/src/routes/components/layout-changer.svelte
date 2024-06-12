@@ -8,14 +8,35 @@
 		ManyBodyForceOptions,
 	} from '$types';
 	import Input from '$ui/input.svelte';
-	import Button from '$ui/button.svelte';
 	export let drawSettings: DrawSettingsInterface;
 	export let doRelayout;
 
 	// layout options
 	let options: LayoutOptions[] = ['layerTree', 'straightTree', 'circular', 'forceBased'];
-	let layoutNestingLevels: LayoutNestingLevels[] = ['inner', 'intermediate', 'root'];
+	let layoutNestingLevels: LayoutNestingLevels[] = ['root', 'intermediate', 'inner'];
 	let manyBodyForceOptions: ManyBodyForceOptions[] = ['Charge', 'Rectangular', 'None'];
+
+	// Get background color for layout options
+	function getBgcolor(
+		level: LayoutNestingLevels,
+		drawSettings: DrawSettingsInterface,
+	): string | undefined {
+		if (!drawSettings.colorFromBottom) {
+			return undefined;
+		}
+		if (level === 'root') {
+			return drawSettings.nodeColors[0] + '28';
+		}
+		if ((level = 'intermediate')) {
+			return drawSettings.nodeColors[1] + '28';
+		}
+		if ((level = 'inner')) {
+			return drawSettings.nodeColors[-1] + '28';
+		}
+
+		return undefined;
+	}
+	let bgColorTmp: string | undefined = undefined;
 </script>
 
 <div class="overflow-auto">
@@ -72,9 +93,14 @@
 	<div class="h-8" />
 
 	<!-- layout settings -->
+	<!-- #F1F5F9 -->
 	<div>
 		{#each layoutNestingLevels as level}
-			<div class="bg-slate-100 rounded-md p-4 mb-4 mr-8 ml-0">
+			{(bgColorTmp = getBgcolor(level, drawSettings)) && ''}
+			<div
+				class="bg-slate-100 rounded-md p-4 mb-4 mr-8 ml-0"
+				style={bgColorTmp ? `background-color: ${bgColorTmp}` : ''}
+			>
 				<Heading headingNumber={5}>{level.charAt(0).toUpperCase() + level.slice(1)} Layout</Heading>
 				<select
 					bind:value={drawSettings[`${level}Layout`]}
