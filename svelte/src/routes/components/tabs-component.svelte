@@ -8,10 +8,9 @@
 		'text-gray-900 bg-gray-100 active focus:outline-none dark:bg-gray-700 dark:text-white cursor-default';
 	const notSelectedClass =
 		'bg-white hover:text-gray-700 hover:bg-gray-50 focus:outline-none dark:hover:text-white dark:bg-gray-800 dark:hover:bg-gray-700';
-	const defaultClasses =
-		'inline-block w-full p-4  border-gray-200 dark:border-gray-700 focus:ring-4';
-	const middleClasses = 'border-r focus:ring-blue-300';
-	const lastClasses = 'border-s-0 rounded-e-lg focus:ring-blue-300';
+	const defaultClasses = 'inline-block w-full p-4  border-gray-200 dark:border-gray-700';
+	const middleClasses = 'border-r';
+	const lastClasses = 'border-s-0 rounded-e-lg';
 
 	const tabs = Object.values(SidePanelTab).filter(t => typeof t === 'string') as string[];
 </script>
