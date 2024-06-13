@@ -235,14 +235,13 @@
 			forcedSidebarWidth ??= clientSidebarWidth;
 			clientXPos = e.clientX;
 		}}
-		on:drag={e => {
+		on:dragend={e => {
 			if (e.clientX != 0 && forcedSidebarWidth) {
 				const dX = e.clientX - clientXPos;
 				forcedSidebarWidth = forcedSidebarWidth - 2 * dX;
 				clientXPos = e.clientX;
 			}
 		}}
-		on:dragend={_ => {}}
 	/>
 
 	<!-- sidepanel -->
