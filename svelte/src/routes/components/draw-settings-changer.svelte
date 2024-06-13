@@ -5,6 +5,7 @@
 	import Input from '$ui/input.svelte';
 	import Button from '$ui/button.svelte';
 	import {colorPallets, getNodeColors} from '$scripts';
+	import {toScreenName} from '$helper/frontend-helpers';
 	export let drawSettings: DrawSettingsInterface;
 	export let doRedraw;
 	export let maximumDepth: number;
@@ -102,7 +103,7 @@
 
 	<!-- nodeCornerRadius -->
 	<div>
-		<Heading headingNumber={5}>node Corner Radius</Heading>
+		<Heading headingNumber={5}>Node Corner Radius</Heading>
 		<Input
 			type="number"
 			value={drawSettings.nodeCornerRadius}
@@ -119,25 +120,28 @@
 	<!-- Auto-node colors-->
 	<div>
 		<Heading headingNumber={5}>Use node colorscheme</Heading>
-		<select bind:value={colorScheme} on:change={reloadColorScheme}>
+		<select bind:value={colorScheme} on:change={reloadColorScheme} class="ml-4">
 			<option value={undefined}>Custom color scheme</option>
 			{#each colorPallets as value}
 				<option {value}>{value}</option>
 			{/each}
 		</select><br />
 		<input
+			class="ml-4"
 			type="checkbox"
 			bind:checked={colorSchemeSettings.inverted}
 			on:change={reloadColorScheme}
 		/>
 		Invert <br />
 		<input
+			class="ml-4"
 			type="checkbox"
 			bind:checked={colorSchemeSettings.increaseBrightness}
 			on:change={reloadColorScheme}
 		/>
 		Force decreasing brightness <br />
 		<input
+			class="ml-4"
 			type="checkbox"
 			bind:checked={colorSchemeSettings.increaseSaturation}
 			on:change={reloadColorScheme}
@@ -164,29 +168,41 @@
 	<div>
 		<Heading headingNumber={5}>Node Colors</Heading>
 		{#each drawSettings.nodeColors as color, index}
+			{#if drawSettings.colorFromBottom && index == 0}
+				<Heading headingNumber={6}>{toScreenName('root')} level</Heading>
+			{:else if drawSettings.colorFromBottom && index == drawSettings.nodeColors.length - 1}
+				<Heading headingNumber={6}>{toScreenName('inner')} level</Heading>
+			{:else if drawSettings.colorFromBottom && index == 1}
+				<Heading headingNumber={6}>{toScreenName('intermediate')} level</Heading>
+			{/if}
 			<div class="flex">
-				<Input
+				<input
 					type="color"
 					value={color}
-					onChange={e => {
+					class="mx-4 my-1"
+					on:change={e => {
 						drawSettings.nodeColors[index] = e.currentTarget.value;
 						doRedraw = true;
 						colorScheme = undefined;
 					}}
 				/>
 				<!-- remove level -->
-				<Button
-					onClick={() => {
-						drawSettings.nodeColors.splice(index, 1);
-						doRedraw = true;
-						drawSettings.nodeColors = drawSettings.nodeColors;
-						colorScheme = undefined;
-					}}
-				>
-					Remove this level
-				</Button>
+				{#if !(drawSettings.colorFromBottom && (index == 0 || index == drawSettings.nodeColors.length - 1))}
+					<button
+						class="font-medium text-red-600"
+						on:click={() => {
+							drawSettings.nodeColors.splice(index, 1);
+							doRedraw = true;
+							drawSettings.nodeColors = drawSettings.nodeColors;
+							colorScheme = undefined;
+						}}
+					>
+						Remove this level
+					</button>
+				{/if}
 			</div>
 		{/each}
+		<div class="h-2" />
 		<!-- add new level -->
 		<Button
 			onClick={() => {
@@ -202,6 +218,11 @@
 		<!-- Colors from bottom -->
 		<div>
 			<Heading headingNumber={5}>Calculate node colors from bottom</Heading>
+			{#if drawSettings.nodeColors.length < 2}
+				<span class="text-gray-300">
+					(Cannot be enabled while less than 2 node colors are defined)
+				</span>
+			{/if}
 			<Toggle
 				class="ml-4"
 				onToggle={() => {
@@ -209,6 +230,7 @@
 					doRedraw = true;
 				}}
 				state={drawSettings.colorFromBottom}
+				disabled={drawSettings.nodeColors.length < 2}
 			>
 				{drawSettings.colorFromBottom ? 'From bottom' : 'From top'}
 			</Toggle>

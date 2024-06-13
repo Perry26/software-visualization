@@ -8,7 +8,7 @@
 		ManyBodyForceOptions,
 	} from '$types';
 	import Input from '$ui/input.svelte';
-	import Button from '$ui/button.svelte';
+	import {toScreenName} from '$helper/frontend-helpers';
 	export let drawSettings: DrawSettingsInterface;
 	export let doRelayout;
 
@@ -16,6 +16,18 @@
 	let options: LayoutOptions[] = ['layerTree', 'straightTree', 'circular', 'forceBased'];
 	let layoutNestingLevels: LayoutNestingLevels[] = ['root', 'intermediate', 'inner'];
 	let manyBodyForceOptions: ManyBodyForceOptions[] = ['Charge', 'Rectangular', 'None'];
+
+	function getBgColor(level: LayoutNestingLevels, drawSettings: DrawSettingsInterface): string {
+		if (level === 'root') {
+			return drawSettings.nodeColors[0];
+		} else if (level === 'inner') {
+			return drawSettings.nodeColors[drawSettings.nodeColors.length - 1];
+		} else {
+			return drawSettings.nodeColors.length > 2
+				? drawSettings.nodeColors[1]
+				: drawSettings.nodeDefaultColor;
+		}
+	}
 </script>
 
 <div class="overflow-auto">
@@ -74,8 +86,13 @@
 	<!-- layout settings -->
 	<div>
 		{#each layoutNestingLevels as level}
-			<div class="bg-slate-100 rounded-md p-4 mb-4 mr-8 ml-0">
-				<Heading headingNumber={5}>{level.charAt(0).toUpperCase() + level.slice(1)} Layout</Heading>
+			<div
+				class="{drawSettings.colorFromBottom ? '' : 'bg-slate-100'} rounded-md p-4 mb-4 mr-8 ml-0"
+				style={drawSettings.colorFromBottom
+					? `background-color: ${getBgColor(level, drawSettings)}40`
+					: ''}
+			>
+				<Heading headingNumber={5}>{toScreenName(level)} Layout</Heading>
 				<select
 					bind:value={drawSettings[`${level}Layout`]}
 					on:change={() => {
