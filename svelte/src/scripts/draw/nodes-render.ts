@@ -94,21 +94,27 @@ export function addLiftCollapseButtons(
 export function renderNodeLabels(svgElement: Element, drawSettings: DrawSettingsInterface) {
 	if (drawSettings.showNodeLabels) {
 		const fontsize = 10;
-		(
-			d3.select(svgElement).selectAll('g.nodes') as d3.Selection<
-				SVGElement,
-				GraphDataNode,
-				Element,
-				undefined
-			>
-		)
-			.append('text')
-			.text(d => d.id)
-			.attr('text-anchor', 'middle')
-			.attr('dominant-baseline', 'middle')
-			.attr('fill', 'black')
-			.attr('font-size', `${fontsize}px`)
-			.attr('y', d => -0.5 * d.height! + 1.333 * fontsize);
+		d3.select(svgElement)
+			.selectAll('g.nodes')
+			.each(function (data) {
+				type SelectionType = d3.Selection<
+					SVGTextElement,
+					GraphDataNode,
+					SVGGElement,
+					GraphDataNode
+				>;
+				let selection = d3.select(this).select(':scope > text') as unknown as SelectionType;
+				if (selection.size() === 0) {
+					selection = d3.select(this).append('text') as unknown as SelectionType;
+				}
+				selection
+					.text(d => d.id)
+					.attr('text-anchor', 'middle')
+					.attr('dominant-baseline', 'middle')
+					.attr('fill', 'black')
+					.attr('font-size', `${fontsize}px`)
+					.attr('y', d => -0.5 * d.height! + 1.333 * fontsize);
+			});
 	} else {
 		d3.select(svgElement).selectAll('g.nodes text').remove();
 	}
