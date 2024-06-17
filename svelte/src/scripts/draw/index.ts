@@ -22,6 +22,15 @@ import {addDragAndDrop} from './drag-and-drop';
 import {renderNodes, renderNodeLabels, addLiftCollapseButtons, renderPorts} from './nodes-render';
 import {addEdgePorts} from './edge-routing';
 
+export class LayoutError extends Error {
+	origin?: unknown;
+
+	constructor(message: string, origin?: unknown) {
+		super(message);
+		this.origin = origin;
+	}
+}
+
 export function draw(
 	svgElement: SVGElement,
 	graphData: GraphData,
@@ -51,32 +60,38 @@ export function draw(
 		forceBased: forceBasedLayout,
 	};
 
-	// Calculate layouts for non-simple nodes
-	innerNodes.forEach(n =>
-		layoutOptionToFunction[drawSettings.innerLayout](
-			getDrawSettingsForLayout(drawSettings, 'inner'),
-			n.members,
-			n,
-		),
-	);
-	intermediateNodes.forEach(n =>
-		layoutOptionToFunction[drawSettings.intermediateLayout](
-			getDrawSettingsForLayout(drawSettings, 'intermediate'),
-			n.members,
-			n,
-		),
-	);
-	rootNodes.forEach(n =>
-		layoutOptionToFunction[drawSettings.intermediateLayout](
-			getDrawSettingsForLayout(drawSettings, 'intermediate'),
-			n.members,
-			n,
-		),
-	);
-	layoutOptionToFunction[drawSettings.rootLayout](
-		getDrawSettingsForLayout(drawSettings, 'root'),
-		rootNodes,
-	); // Todo this is weird
+	try {
+		// Calculate layouts for non-simple nodes
+		innerNodes.forEach(n =>
+			layoutOptionToFunction[drawSettings.innerLayout](
+				getDrawSettingsForLayout(drawSettings, 'inner'),
+				n.members,
+				n,
+			),
+		);
+		intermediateNodes.forEach(n =>
+			layoutOptionToFunction[drawSettings.intermediateLayout](
+				getDrawSettingsForLayout(drawSettings, 'intermediate'),
+				n.members,
+				n,
+			),
+		);
+		rootNodes.forEach(n =>
+			layoutOptionToFunction[drawSettings.intermediateLayout](
+				getDrawSettingsForLayout(drawSettings, 'intermediate'),
+				n.members,
+				n,
+			),
+		);
+		layoutOptionToFunction[drawSettings.rootLayout](
+			getDrawSettingsForLayout(drawSettings, 'root'),
+			rootNodes,
+		);
+	} catch (e) {
+		console.warn(e);
+		//@ts-expect-error
+		throw new LayoutError(`Error in generating layout: ${e.message ?? ''}`, e);
+	}
 
 	// ZOOM HANDLING
 	// Create canvas to contain all elements, so we can transform it for zooming etc.

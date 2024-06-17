@@ -25,6 +25,7 @@
 	import {LayoutMetrics} from '$scripts/draw/metrics';
 	import LayoutChanger from './components/layout-changer.svelte';
 	import {SidePanelTab} from '$types/ui';
+	import {LayoutError} from '$scripts/draw';
 
 	let sidePanelTab: SidePanelTab = SidePanelTab.Input;
 
@@ -133,6 +134,8 @@
 
 	let maximumDepth: number = 0;
 
+	let isLayoutError: boolean = false;
+
 	// Resizing the sidebar
 	let clientSidebarWidth: number;
 	let clientXPos: number = NaN;
@@ -197,13 +200,23 @@
 			if (doRelayout) {
 				// remove the old data
 				cleanCanvas(svgElement!);
-				redrawFunction = draw(
-					svgElement!,
-					graphData,
-					drawSettings,
-					handleNodeCollapseClick,
-					handleDependencyLiftClick,
-				);
+				try {
+					redrawFunction = draw(
+						svgElement!,
+						graphData,
+						drawSettings,
+						handleNodeCollapseClick,
+						handleDependencyLiftClick,
+					);
+					isLayoutError = false;
+				} catch (e) {
+					if (e instanceof LayoutError) {
+						isLayoutError = true;
+					} else {
+						throw e;
+					}
+				}
+
 				doRedraw = true;
 				doRelayout = false;
 
@@ -211,7 +224,9 @@
 			}
 
 			if (doRedraw) {
-				redrawFunction(drawSettings);
+				if (!isLayoutError) {
+					redrawFunction(drawSettings);
+				}
 			}
 		}
 	}
@@ -222,9 +237,22 @@
 
 <div class="flex justify-between h-screen">
 	<!-- canvas -->
-	<div class="m-6 w-full">
+	<div class="m-6 w-full" style={isLayoutError ? 'display: none' : ''}>
 		<svg bind:this={svgElement} class="w-full h-full" />
 	</div>
+
+	{#if isLayoutError}<div class="m-6 w-full">
+			<div
+				class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative"
+				role="alert"
+			>
+				<strong class="font-bold">Error</strong>
+				<span class="block sm:inline">
+					It appears the layout algorithm failed. This is probably due to the force-based algorithm
+					getting extreme parameters. (Details are logged to the console)
+				</span>
+			</div>
+		</div>{/if}
 
 	<!-- vertical line -->
 	<div
