@@ -237,11 +237,14 @@
 
 <div class="flex justify-between h-screen">
 	<!-- canvas -->
-	<div class="m-6 w-full" style={isLayoutError ? 'display: none' : ''}>
+	<div
+		class="m-6 h-full fixed"
+		style={(isLayoutError ? 'display: none' : '') + `width: ${window.innerWidth}px`}
+	>
 		<svg bind:this={svgElement} class="w-full h-full" />
 	</div>
 
-	{#if isLayoutError}<div class="m-6 w-full">
+	{#if isLayoutError}<div class="m-6 fixed">
 			<div
 				class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative"
 				role="alert"
@@ -273,7 +276,11 @@
 	/>
 
 	<!-- sidepanel -->
-	<div class="m-6" style="width: {forcedSidebarWidth}px" bind:clientWidth={clientSidebarWidth}>
+	<div
+		class="m-6 bg-white"
+		style="width: {forcedSidebarWidth}px"
+		bind:clientWidth={clientSidebarWidth}
+	>
 		<TabsComponent bind:sidePanelTab />
 		<br />
 
