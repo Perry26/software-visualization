@@ -2,13 +2,18 @@
 	import Toggle from '$ui/toggle.svelte';
 	import Heading from '$ui/heading.svelte';
 	import type {RawInputType} from '$types/raw-data';
-	import type {RawDataConfigType} from '$types';
+	import type {DrawSettingsInterface, RawDataConfigType} from '$types';
+	import Button from '$ui/button.svelte';
+	import {saveStringToFile} from '$helper/frontend-helpers';
 
 	export let rawData: RawInputType = {};
 	export let doReconvert: boolean;
 	export let rawDataConfig: RawDataConfigType;
+	export let drawSettings: DrawSettingsInterface;
+	export let doRelayout: boolean;
 
 	let files: FileList;
+	let drawSettingsFile: FileList;
 	let useExampleData = true;
 	let disableButton = true;
 
@@ -86,4 +91,29 @@
 	>
 		Omit all-encompassing classes
 	</Toggle>
+
+	<div class="h-8" />
+	<Heading>Save and load draw- and layoutSettings</Heading>
+	<Button
+		onClick={() => {
+			const tempDrawSettings = JSON.parse(JSON.stringify(drawSettings));
+			delete tempDrawSettings.shownEdgesType;
+			const saveObj = JSON.stringify(tempDrawSettings);
+			saveStringToFile(saveObj, 'application/json', '.json', 'drawSettings');
+		}}>Save drawSettings</Button
+	> <br />
+	<input
+		accept="application/json"
+		bind:files={drawSettingsFile}
+		type="file"
+		on:change={async () => {
+			if (drawSettingsFile.length > 0) {
+				const parsedData = JSON.parse(await drawSettingsFile[0].text());
+				drawSettings = {...drawSettings, ...parsedData};
+				doRelayout = true;
+
+				rawData.fileName = parsedData.fileName ?? rawData.fileName;
+			}
+		}}
+	/>
 </div>

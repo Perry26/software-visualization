@@ -237,10 +237,7 @@
 
 <div class="flex justify-between h-screen">
 	<!-- canvas -->
-	<div
-		class="m-6 h-full fixed"
-		style={(isLayoutError ? 'display: none' : '') + `width: ${window.innerWidth}px`}
-	>
+	<div class="m-6 h-full w-full fixed" style={isLayoutError ? 'display: none' : ''}>
 		<svg bind:this={svgElement} class="w-full h-full" />
 	</div>
 
@@ -259,7 +256,7 @@
 
 	<!-- vertical line -->
 	<div
-		class="bg-neutral-300 w-[2px] hover:cursor-col-resize"
+		class="bg-neutral-300 w-[2px] hover:cursor-col-resize bg-red"
 		draggable="true"
 		role="none"
 		on:dragstart={e => {
@@ -288,7 +285,13 @@
 			class="overflow-y-auto overflow-x-auto"
 			style="display: {sidePanelTab === SidePanelTab.Input ? 'block' : 'none'}"
 		>
-			<RawDataInputer bind:rawData bind:doReconvert bind:rawDataConfig />
+			<RawDataInputer
+				bind:rawData
+				bind:doReconvert
+				bind:rawDataConfig
+				bind:drawSettings
+				bind:doRelayout
+			/>
 		</div>
 		<div
 			class="overflow-y-auto overflow-x-auto"

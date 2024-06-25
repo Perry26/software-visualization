@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Heading from '$ui/heading.svelte';
 	import type {LayoutMetrics} from '$scripts/draw/metrics';
+	import { saveStringToFile } from '$helper/frontend-helpers';
 
 	export let evaluator: LayoutMetrics | undefined;
 	export function resetEvaluator() {
@@ -24,24 +25,9 @@
 		}
 	}
 
-	function saveStringToFile(s: string, type: string, extension: string) {
-		const date = new Date();
-		const saveFileName = `${fileName}D${date.getFullYear()}-${date.getMonth()}-${date.getDay()}T${date.getHours()}-${date.getMinutes()}-${date.getSeconds()}.${extension}`
-
-		const blob = new Blob([s ?? ''], {type:type});
-		const a = document.createElement('a');
-  		a.download = saveFileName;
-  		a.href = URL.createObjectURL(blob);
-  		a.dataset.downloadurl = [type, a.download, a.href].join(':');
-  		a.style.display = 'none';
-  		document.body.appendChild(a);
-  		a.click();
-  		document.body.removeChild(a);
-  		setTimeout(function() { URL.revokeObjectURL(a.href); }, 1500);
-	}
 
 	function saveEvaluationResults() {
-		saveStringToFile(copyString ?? '', 'text/csv', 'csv');
+		saveStringToFile(copyString ?? '', 'text/csv', 'csv', fileName ?? "undefined");
 	}
 
 	function savePicture() {
@@ -52,7 +38,7 @@
 			+ `<rect x="${minX - padding - 1}" y="${minY - padding - 1}" width="${maxX - minX + 2 * padding + 2}" height="${maxY - minY + 2 * padding + 2}" fill="white" />`
 			+ content 
 			+ "</svg>"
-		saveStringToFile(string, 'text/svg', 'svg')
+		saveStringToFile(string, 'text/svg', 'svg', fileName ?? "undefined")
 	}
 </script>
 
