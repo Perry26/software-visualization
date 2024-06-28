@@ -26,6 +26,7 @@
 	import LayoutChanger from './components/layout-changer.svelte';
 	import {SidePanelTab} from '$types/ui';
 	import {LayoutError} from '$scripts/draw';
+	import {makeDefaultDrawSettings} from '../default-objects';
 
 	let sidePanelTab: SidePanelTab = SidePanelTab.Input;
 
@@ -45,82 +46,7 @@
 		hideHierarchicalEdges: undefined,
 	};
 	let graphData: GraphData;
-	let drawSettings: DrawSettingsInterface = {
-		minimumNodeSize: 50,
-		buttonRadius: 5,
-		nodeCornerRadius: 5,
-		nodePadding: 20,
-		nodeMargin: {
-			inner: 30,
-			intermediate: 30,
-			root: 30,
-		},
-		textSize: 10,
-		shownEdgesType: new Map<EdgeType, boolean>(),
-		showEdgeLabels: false,
-		showNodeLabels: true,
-		showEdgePorts: true,
-		colorFromBottom: true,
-		invertPortColors: false,
-		nodeDefaultColor: '#6a6ade',
-		nodeColors: ['#32a875', '#d46868'],
-		innerLayout: 'layerTree',
-		intermediateLayout: 'layerTree',
-		rootLayout: 'layerTree',
-		layoutSettings: {
-			inner: {
-				uniformSize: true,
-				manyBodyForce: {
-					type: 'Rectangular',
-					strength: 30,
-				},
-				collideRectangles: true,
-				centerForceStrength: {
-					enabled: true,
-					x: 0.1,
-					y: 0.1,
-				},
-				linkForce: {
-					enabled: true,
-					distance: 30,
-					strength: 1,
-				},
-			},
-			intermediate: {
-				uniformSize: true,
-				manyBodyForce: {type: 'Rectangular', strength: 30},
-				collideRectangles: true,
-				centerForceStrength: {
-					enabled: true,
-					x: 0.1,
-					y: 0.1,
-				},
-				linkForce: {
-					enabled: true,
-					distance: 30,
-					strength: 1,
-				},
-			},
-			root: {
-				uniformSize: true,
-				manyBodyForce: {
-					type: 'Rectangular',
-					strength: 30,
-				},
-				collideRectangles: true,
-				centerForceStrength: {
-					enabled: true,
-					x: 0.1,
-					y: 0.1,
-				},
-				linkForce: {
-					enabled: true,
-					distance: 30,
-					strength: 1,
-				},
-			},
-		},
-	};
+	let drawSettings: DrawSettingsInterface = makeDefaultDrawSettings();
 
 	let svgElement: SVGElement | undefined = undefined;
 	let evaluator: LayoutMetrics = new LayoutMetrics();
@@ -255,29 +181,29 @@
 		</div>{/if}
 
 	<!-- vertical line -->
-	<div
-		class="bg-neutral-300 w-[2px] hover:cursor-col-resize bg-red"
-		draggable="true"
-		role="none"
-		on:dragstart={e => {
-			forcedSidebarWidth ??= clientSidebarWidth;
-			clientXPos = e.clientX;
-		}}
-		on:dragend={e => {
-			if (e.clientX != 0 && forcedSidebarWidth) {
-				const dX = e.clientX - clientXPos;
-				forcedSidebarWidth = forcedSidebarWidth - 2 * dX;
-				clientXPos = e.clientX;
-			}
-		}}
-	/>
+	<div class="bg-neutral-300 w-[2px] hover:cursor-col-resize bg-red" role="none" />
 
 	<!-- sidepanel -->
 	<div
-		class="m-6 bg-white"
+		class="py-6 pr-6 bg-white"
 		style="width: {forcedSidebarWidth}px"
 		bind:clientWidth={clientSidebarWidth}
 	>
+		<div
+			class="bg-slate-200 w-[2px] float-left h-full mr-6 hover:cursor-col-resize"
+			draggable="true"
+			role="none"
+			on:dragstart={e => {
+				forcedSidebarWidth ??= clientSidebarWidth;
+				clientXPos = e.clientX;
+			}}
+			on:dragend={e => {
+				if (e.clientX != 0 && forcedSidebarWidth) {
+					const dX = e.clientX - clientXPos;
+					forcedSidebarWidth = forcedSidebarWidth - dX;
+				}
+			}}
+		/>
 		<TabsComponent bind:sidePanelTab />
 		<br />
 
