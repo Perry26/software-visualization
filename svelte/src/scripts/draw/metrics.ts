@@ -193,7 +193,7 @@ export class LayoutMetrics {
 		}, '');
 
 		// Return results
-		return {copyString, tableString};
+		return {copyString, tableString, evaluationData: arr};
 	}
 
 	getBoundaries() {
