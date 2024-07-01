@@ -1,4 +1,4 @@
-import type {DrawSettingsInterface, EdgeType} from '$types';
+import {EdgeType, type DrawSettingsInterface} from '$types';
 
 const defaultDrawSettings: DrawSettingsInterface = {
 	minimumNodeSize: 50,
@@ -78,5 +78,7 @@ const defaultDrawSettings: DrawSettingsInterface = {
 };
 
 export function makeDefaultDrawSettings(): DrawSettingsInterface {
-	return structuredClone(defaultDrawSettings);
+	const settings = structuredClone(defaultDrawSettings);
+	settings.shownEdgesType.set(EdgeType.calls, true);
+	return settings;
 }

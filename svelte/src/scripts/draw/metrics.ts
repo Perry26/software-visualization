@@ -1,5 +1,5 @@
 import {getNode} from '$helper/graphdata-helpers';
-import type {GraphData, GraphDataEdge, GraphDataNode} from '$types';
+import {EdgeType, type GraphData, type GraphDataEdge, type GraphDataNode} from '$types';
 import {
 	Point,
 	Vector,
@@ -64,16 +64,18 @@ export class LayoutMetrics {
 
 		// Prepare data
 		// Line segments
-		const segments = this.data.links.flatMap(l => {
-			const res: {segment: Segment; edge: GraphDataEdge}[] = [];
-			for (let i = 0; i < l.renderPoints!.length - 1; i++) {
-				const p1 = new Point(l.renderPoints![i].x, l.renderPoints![i].y);
-				const p2 = new Point(l.renderPoints![i + 1].x, l.renderPoints![i + 1].y);
-				const segment = new Segment(p1, p2);
-				res.push({segment, edge: l});
-			}
-			return res;
-		});
+		const segments = this.data.links
+			.filter(l => l.type === EdgeType.calls)
+			.flatMap(l => {
+				const res: {segment: Segment; edge: GraphDataEdge}[] = [];
+				for (let i = 0; i < l.renderPoints!.length - 1; i++) {
+					const p1 = new Point(l.renderPoints![i].x, l.renderPoints![i].y);
+					const p2 = new Point(l.renderPoints![i + 1].x, l.renderPoints![i + 1].y);
+					const segment = new Segment(p1, p2);
+					res.push({segment, edge: l});
+				}
+				return res;
+			});
 
 		// Segment length
 		const averageSegment =
