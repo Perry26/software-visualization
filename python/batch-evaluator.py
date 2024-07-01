@@ -38,6 +38,8 @@ json_uploader.send_keys(os.getcwd()+"/input-data/jhotdraw-trc-sum-rs.json")
 # Documentation says the following line is necessary, but it crashed for me.
 # However, commenting it out works on Firefox, but not for Chrome
 # json_uploader.click()
+hash_uploader = element("#hashFile-uploader")
+hash_uploader.send_keys(os.getcwd()+"/output-data/hashes")
 
 # Run evaluation
 element("#run-button").click()

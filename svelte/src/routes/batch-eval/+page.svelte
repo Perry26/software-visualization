@@ -17,7 +17,10 @@
 	//@ts-ignore
 	import * as hash from 'object-hash';
 
+	const amountOfIterations = 100;
+
 	let files: FileList;
+	let hashFiles: FileList;
 	let canvasContainer: HTMLElement;
 
 	// Variables containing output
@@ -36,8 +39,15 @@
 		return rawData as RawInputType;
 	}
 
+	async function parseHashFile(file: File): Promise<string[]> {
+		return (await file.text()).split('\n');
+	}
+
 	/** Generates random drawSettings */
-	function getRandomDrawSettings(): DrawSettingsInterface {
+	function getRandomDrawSettings(
+		bannedHashes: string[],
+		randomRawData: RawInputType,
+	): DrawSettingsInterface {
 		const settings = makeDefaultDrawSettings();
 
 		const layoutAlgorithms: LayoutOptions[] = ['layerTree', 'circular', 'forceBased'];
@@ -109,10 +119,22 @@
 			}
 		});
 
-		return settings;
+		// Recurse if we're already explored this hash
+		const thisHash = hash({rawData: randomRawData, drawSettings: settings});
+		if (bannedHashes.includes(thisHash)) {
+			return getRandomDrawSettings(bannedHashes, randomRawData);
+		} else {
+			bannedHashes.push(thisHash);
+			return settings;
+		}
 	}
 
 	async function run(files: FileList) {
+		let bannedHashes: string[] = [];
+		if (hashFiles.length > 0) {
+			bannedHashes = await parseHashFile(hashFiles[0]);
+		}
+
 		if (!files || files.length === 0) {
 			debugOutput += 'No input files loaded!\n';
 			return;
@@ -128,7 +150,9 @@
 		}
 
 		// Make object of all drawSettings we're considering
-		const variations = [...Array(2).keys()].map(_ => getRandomDrawSettings());
+		const variations = [...Array(amountOfIterations).keys()].map(_ =>
+			getRandomDrawSettings(bannedHashes, rawData[0]),
+		);
 
 		// Now run the variations on all input files
 		variations.forEach(async (variation, i) => {
@@ -197,6 +221,18 @@
 	name="uploader"
 	type="file"
 	multiple={true}
+	on:change={() => {
+		doneOutput = '';
+	}}
+/>
+
+<input
+	accept="text"
+	bind:files={hashFiles}
+	id="hashFile-uploader"
+	name="uploader"
+	type="file"
+	multiple={false}
 	on:change={() => {
 		doneOutput = '';
 	}}
