@@ -5,6 +5,7 @@
 	import unzip from 'lodash/unzip.js';
 	import range from 'lodash/range.js';
 	import {onMount} from 'svelte';
+	import {type LayoutNestingLevels, type LayoutOptions} from '$types';
 
 	export let data;
 
@@ -147,14 +148,14 @@
 		const scales: d3.ScaleLinear<number, number, never>[] = [];
 		indexesToScaleLinear.map(index => {
 			const data = useIndexFilter(dataGroups[index]);
-			const q = d3.quantile(data, 0.1)!;
+			const q = d3.quantile(data, 0)!;
 			const r = d3.quantile(data, 0.9)!;
 			scales[index] = d3.scaleLinear([q, r], [0, 1]);
 		});
 
 		indexesToScaleInverse.map(index => {
 			const data = useIndexFilter(dataGroups[index]);
-			const q = d3.quantile(data, 0.1)!;
+			const q = d3.quantile(data, 0)!;
 			const r = d3.quantile(data, 0.9)!;
 			scales[index] = d3.scaleLinear([q, r], [1, 0]);
 		});
@@ -168,7 +169,7 @@
 			});
 
 			// Otherwise, we do the same as the rest:
-			const q = d3.quantile(data, 0.1)!;
+			const q = d3.quantile(data, 0)!;
 			const r = d3.quantile(data, 0.9)!;
 			scales[index] = d3.scaleLinear([q, r], [0, 1]);
 		});
@@ -183,6 +184,7 @@
 
 	function scatterPlot() {
 		let points: [number, number, string][];
+		console.log(dataGroups[Indexes.aspectRatio]);
 		points = useIndexFilter(
 			zip(dataGroups[indexX], dataGroups[indexY], hashes) as [number, number, string][],
 		);
@@ -193,57 +195,69 @@
 		const axisX = d3.axisBottom(scaleX);
 		const axisY = d3.axisLeft(scaleY);
 
-		// Color dots
-		const colorValues = new Set<string>();
-		hashes.forEach(h =>
-			colorValues.add(
-				String([
-					data.jsonData[h].rootLayout,
-					data.jsonData[h].intermediateLayout,
-					data.jsonData[h].innerLayout,
-				]),
-			),
-		);
-		const colorScheme = d3.scaleOrdinal(d3.schemeAccent).domain([...colorValues]);
-
 		// Generate axes
 		//@ts-ignore
 		d3.select('g.axis.x').call(axisX).attr('transform', `translate(0, ${height})`);
 		//@ts-ignore
 		d3.select('g.axis.y').call(axisY);
 
-		d3.select('#points')
-			.selectAll('circle')
-			.data(points)
-			.join('circle')
-			.attr('fill', d => {
-				const h = d[2];
-				return colorScheme(
-					String([
-						data.jsonData[h].rootLayout,
-						data.jsonData[h].intermediateLayout,
-						data.jsonData[h].innerLayout,
-					]),
-				);
-			})
-			.attr('fill-opacity', 0.73)
-			.attr('r', pointRadius)
-			.attr('cx', d => scaleX(d[0]))
-			.attr('cy', d => scaleY(d[1]))
-			.on('click', function (_, d) {
-				const hash = d[2];
-				const jsonData = data.jsonData[hash];
-				const text = `${hash}\n${jsonData.innerLayout} ${jsonData.intermediateLayout} ${jsonData.rootLayout}`;
-				d3.select('#tooltip-div').text(text);
-			});
+		// Set up stuff for actual rendering
+		const colorMap: {[layout in LayoutOptions]: string} = {
+			layerTree: '#4682B4',
+			circular: '#FF6347',
+			forceBased: '#9ACD32',
+			straightTree: '#EE82EE',
+		};
+		const levelMap: {[layer in LayoutNestingLevels]: number} = {
+			inner: 3,
+			intermediate: 6,
+			root: 9,
+		};
 
+		// Helper function
+		function drawCircle(
+			selection: d3.Selection<SVGGElement, [number, number, string], d3.BaseType, unknown>,
+			level: LayoutNestingLevels,
+		) {
+			selection
+				.append('circle')
+				.attr('fill', d => {
+					const h = d[2];
+					const layout = data.jsonData[h][`${level}Layout`];
+					return colorMap[layout];
+				})
+				.attr('fill-opacity', 1)
+				.attr('r', levelMap[level])
+				.attr('cx', d => scaleX(d[0]))
+				.attr('cy', d => scaleY(d[1]))
+				.on('click', function (_, d) {
+					const hash = d[2];
+					const jsonData = data.jsonData[hash];
+					const text = `${hash}`;
+					d3.select('#tooltip-div').text(text);
+				})
+				.attr('class', `${level}-dot`);
+		}
+
+		// Now, actually render all the dots
+		d3.select('#points').selectAll('g').remove();
+		const selection = d3.select('#points').selectAll('g').data(points).enter().append('g');
+		drawCircle(selection, 'root');
+		drawCircle(selection, 'intermediate');
+		drawCircle(selection, 'inner');
+
+		// Finally, allow zooming
 		const container = d3.select('.vis');
 		d3.select('#canvas').call(
 			d3.zoom<any, any>().on('zoom', ({transform}) => {
 				container.attr('transform', transform);
-				d3.select('#points')
-					.selectAll('circle')
-					.attr('r', pointRadius / transform.k);
+				(['root', 'intermediate', 'inner'] as LayoutNestingLevels[]).forEach(level => {
+					const sel = d3
+						.select('#points')
+						.selectAll(`.${level}-dot`)
+						.attr('r', levelMap[level] / transform.k);
+					console.log({sel});
+				});
 			}),
 		);
 	}
@@ -251,7 +265,7 @@
 	function rerender() {
 		makeIndexFilter();
 		// TODO refactor scale logic, should not require retransforming data
-		({scales, dataGroups, hashes} = transformData());
+		({scales} = transformData());
 		scatterPlot();
 	}
 
@@ -314,6 +328,11 @@
 				bind:value={indexFilterCutOff}
 				on:change={rerender}
 			/>
+		</div>
+		<div class="w-500 ml-5">
+			<div style="color: #4682B4">layerTree</div>
+			<div style="color: #FF6347">circular</div>
+			<div style="color: #9ACD32">forceBased</div>
 		</div>
 		<div class="w-500 ml-5" id="tooltip-div" />
 	</div>
