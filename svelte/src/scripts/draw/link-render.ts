@@ -114,7 +114,7 @@ export function renderLinks(
 		let result = `M ${l.renderPoints[0].x} ${l.renderPoints[0].y}`;
 
 		l.renderPoints.forEach(({x, y}) => {
-			result += `L ${x} ${y} `;
+			result += `L ${notNaN(x)} ${notNaN(y)} `;
 		});
 
 		return result;

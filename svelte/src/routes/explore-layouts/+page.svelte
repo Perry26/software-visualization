@@ -2,6 +2,8 @@
 	import Heading from '$ui/heading.svelte';
 	import * as d3 from 'd3';
 	import zip from 'lodash/zip.js';
+	import unzip from 'lodash/unzip.js';
+	import range from 'lodash/range.js';
 	import {onMount} from 'svelte';
 
 	export let data;
@@ -9,32 +11,200 @@
 	let indexX = 0;
 	let indexY = 1;
 
+	let scales: d3.ScaleLinear<number, number, never>[], dataGroups: number[][], hashes: string[];
+
+	let indexFilter: number[] | undefined = undefined;
+
 	const width = 500;
 	const height = 500;
 
 	const pointRadius = 5;
 
-	let removeExtremes = {max: 0, min: 0};
+	let indexFilterCutOff: number | null = null;
 
-	// Better tooltip / filtering
+	function makeIndexFilter() {
+		if (indexFilterCutOff === null) {
+			indexFilter = undefined;
+			return;
+		}
+
+		const amount = indexFilterCutOff;
+
+		// Get the top indexes in an array
+		const topPoints = dataGroups.map((group, index) => {
+			const scale = scales[index];
+
+			const scaledPoints = group.map((d, i) => ({value: scale(d), index: i}));
+			scaledPoints.sort((a, b) => a.value - b.value);
+
+			return scaledPoints.slice(0, amount).map(({index}) => index);
+		});
+
+		// Get intersection of the arrays
+		let intersection = new Set(topPoints[0]);
+		topPoints.forEach((group, index) => {
+			//Ignoring the irrelevant indexes is important
+			if (indexesToIgnore.includes(index)) {
+				return;
+			}
+
+			intersection = intersection.intersection(new Set(group));
+		});
+
+		console.log(intersection.size);
+
+		indexFilter = [...intersection];
+	}
+
+	function useIndexFilter<T>(points: T[]) {
+		if (indexFilter !== undefined) {
+			return points.filter((_, i) => indexFilter!.includes(i));
+		} else {
+			return points;
+		}
+	}
+
+	function validateEvaluationResults(
+		evaluationResults: any[][],
+	): evaluationResults is [
+		number,
+		number,
+		number,
+		number,
+		number,
+		number,
+		number,
+		number,
+		number,
+		number,
+		string,
+	][] {
+		return evaluationResults.every(data => {
+			if (typeof data[10] !== 'string') {
+				return false;
+			}
+			if (
+				!range(10).every(i => {
+					if (typeof data[i] !== 'number') {
+						return false;
+					}
+					return true;
+				})
+			) {
+				return false;
+			}
+			return true;
+		});
+	}
+
+	enum Indexes {
+		nodeOverlaps,
+		nodeOrthogonality,
+		area,
+		aspectRatio,
+		lineIntersections,
+		fullLineOverlaps,
+		lineBends,
+		lengthDifference,
+		radialDistance,
+		unrelatedOverlaps,
+	}
+
+	const indexesToScaleLinear = [
+		Indexes.nodeOverlaps,
+		Indexes.area,
+		Indexes.lineIntersections,
+		Indexes.fullLineOverlaps,
+		Indexes.lengthDifference,
+		Indexes.unrelatedOverlaps,
+	];
+	const indexesToScaleInverse = [Indexes.nodeOrthogonality, Indexes.radialDistance];
+	const indexesCloseToOne = [Indexes.aspectRatio];
+	const indexesToIgnore = [Indexes.lineBends];
+
+	function transformData() {
+		if (!validateEvaluationResults(data.evaluationResults)) {
+			console.error('Invalid data from sever');
+		}
+
+		// Check if constants aren't malformed
+		if (
+			indexesToScaleLinear.length +
+				indexesToScaleInverse.length +
+				indexesCloseToOne.length +
+				indexesToIgnore.length !==
+			data.header.length
+		) {
+			console.error('Invalid constants');
+		}
+
+		// Parse some of the data
+		const dataGroups = unzip(data.evaluationResults) as unknown as number[][];
+		const hashes = dataGroups.pop() as unknown as string[];
+
+		// Generate scales for the right domain, based on what property we're dealing with.
+		// (range will be set in the scatterPlot-function)
+		const scales: d3.ScaleLinear<number, number, never>[] = [];
+		indexesToScaleLinear.map(index => {
+			const data = useIndexFilter(dataGroups[index]);
+			const q = d3.quantile(data, 0.1)!;
+			const r = d3.quantile(data, 0.9)!;
+			scales[index] = d3.scaleLinear([q, r], [0, 1]);
+		});
+
+		indexesToScaleInverse.map(index => {
+			const data = useIndexFilter(dataGroups[index]);
+			const q = d3.quantile(data, 0.1)!;
+			const r = d3.quantile(data, 0.9)!;
+			scales[index] = d3.scaleLinear([q, r], [1, 0]);
+		});
+
+		// Here, we have to modify the original data!
+		// Any datapoint lower than 1 will be changed to its reciprical!
+		indexesCloseToOne.map(index => {
+			const data = useIndexFilter(dataGroups[index]);
+			data.forEach((d, i) => {
+				data[i] = d < 1 ? 1 / d : d;
+			});
+
+			// Otherwise, we do the same as the rest:
+			const q = d3.quantile(data, 0.1)!;
+			const r = d3.quantile(data, 0.9)!;
+			scales[index] = d3.scaleLinear([q, r], [0, 1]);
+		});
+
+		indexesToIgnore.map(index => {
+			const data = useIndexFilter(dataGroups[index]);
+			scales[index] = d3.scaleLinear([d3.min(data)!, d3.max(data)!], [0, 1]);
+		});
+
+		return {scales, dataGroups, hashes};
+	}
+
 	function scatterPlot() {
-		// Transform data and remove extreme values if desired
-		let xValues = data.evaluationResults.map(d => d[indexX]) as number[];
-		let yValues = data.evaluationResults.map(d => d[indexY]) as number[];
-		let hashes = data.evaluationResults.map(d => d[d.length - 1]) as string[];
-		let points = zip(xValues, yValues, hashes) as [number, number, string][];
-		points.sort((a, b) => b[0] - a[0]).splice(0, removeExtremes.max);
-		points.sort((a, b) => b[1] - a[1]).splice(0, removeExtremes.max);
-		points.sort((a, b) => a[0] - b[0]).splice(0, removeExtremes.min);
-		points.sort((a, b) => a[1] - b[1]).splice(0, removeExtremes.min);
-		xValues = points.map(([x, _]) => x);
-		yValues = points.map(([_, y]) => y);
+		let points: [number, number, string][];
+		points = useIndexFilter(
+			zip(dataGroups[indexX], dataGroups[indexY], hashes) as [number, number, string][],
+		);
 
-		const scaleX = d3.scaleLinear([Math.min(...xValues), Math.max(...xValues)], [0, width]);
-		const scaleY = d3.scaleLinear([Math.min(...yValues), Math.max(...yValues)], [height, 0]);
+		const scaleX = scales[indexX].range([0, width]);
+		const scaleY = scales[indexY].range([height, 0]);
 
 		const axisX = d3.axisBottom(scaleX);
 		const axisY = d3.axisLeft(scaleY);
+
+		// Color dots
+		const colorValues = new Set<string>();
+		hashes.forEach(h =>
+			colorValues.add(
+				String([
+					data.jsonData[h].rootLayout,
+					data.jsonData[h].intermediateLayout,
+					data.jsonData[h].innerLayout,
+				]),
+			),
+		);
+		const colorScheme = d3.scaleOrdinal(d3.schemeAccent).domain([...colorValues]);
 
 		// Generate axes
 		//@ts-ignore
@@ -46,7 +216,16 @@
 			.selectAll('circle')
 			.data(points)
 			.join('circle')
-			.attr('fill', 'steelblue')
+			.attr('fill', d => {
+				const h = d[2];
+				return colorScheme(
+					String([
+						data.jsonData[h].rootLayout,
+						data.jsonData[h].intermediateLayout,
+						data.jsonData[h].innerLayout,
+					]),
+				);
+			})
 			.attr('fill-opacity', 0.73)
 			.attr('r', pointRadius)
 			.attr('cx', d => scaleX(d[0]))
@@ -69,8 +248,16 @@
 		);
 	}
 
-	onMount(() => {
+	function rerender() {
+		makeIndexFilter();
+		// TODO refactor scale logic, should not require retransforming data
+		({scales, dataGroups, hashes} = transformData());
 		scatterPlot();
+	}
+
+	onMount(() => {
+		({scales, dataGroups, hashes} = transformData());
+		rerender();
 	});
 </script>
 
@@ -118,21 +305,14 @@
 				for="remove-extremes"
 				class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
 			>
-				Remove extreme values
+				Show only top n values
 			</label>
 			<input
 				id="remove-extremes"
 				type="number"
 				class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-				bind:value={removeExtremes.min}
-				on:change={scatterPlot}
-			/>
-			<input
-				id="remove-extremes"
-				type="number"
-				class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-				bind:value={removeExtremes.max}
-				on:change={scatterPlot}
+				bind:value={indexFilterCutOff}
+				on:change={rerender}
 			/>
 		</div>
 		<div class="w-500 ml-5" id="tooltip-div" />

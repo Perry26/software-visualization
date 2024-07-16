@@ -1,7 +1,7 @@
-<script>
+<script lang="ts">
 	export let disabled = false;
 	export let onClick = () => {};
-	export let id;
+	export let id: string | undefined = undefined;
 </script>
 
 <button

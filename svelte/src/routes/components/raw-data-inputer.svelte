@@ -2,7 +2,7 @@
 	import Toggle from '$ui/toggle.svelte';
 	import Heading from '$ui/heading.svelte';
 	import type {RawInputType} from '$types/raw-data';
-	import type {DrawSettingsInterface, RawDataConfigType} from '$types';
+	import {EdgeType, type DrawSettingsInterface, type RawDataConfigType} from '$types';
 	import Button from '$ui/button.svelte';
 	import {saveStringToFile} from '$helper/frontend-helpers';
 
@@ -108,8 +108,10 @@
 		type="file"
 		on:change={async () => {
 			if (drawSettingsFile.length > 0) {
-				const parsedData = JSON.parse(await drawSettingsFile[0].text());
+				const parsedData = JSON.parse((await drawSettingsFile[0].text()).split(';')[0]);
 				drawSettings = {...drawSettings, ...parsedData};
+				drawSettings.shownEdgesType = new Map();
+				drawSettings.shownEdgesType.set(EdgeType.calls, true);
 				doRelayout = true;
 
 				rawData.fileName = parsedData.fileName ?? rawData.fileName;
