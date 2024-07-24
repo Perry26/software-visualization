@@ -23,6 +23,17 @@
 
 	let indexFilterCutOff: number | null = null;
 
+	// How to visualize the markers
+	enum DotType {
+		Flag,
+		NestedCircles,
+		OnlyRoot,
+		OnlyIntermediate,
+		OnlyLeaf,
+	}
+
+	let dotType: DotType = DotType.Flag;
+
 	function makeIndexFilter() {
 		if (indexFilterCutOff === null) {
 			indexFilter = undefined;
@@ -51,8 +62,6 @@
 
 			intersection = intersection.intersection(new Set(group));
 		});
-
-		console.log(intersection.size);
 
 		indexFilter = [...intersection];
 	}
@@ -184,8 +193,8 @@
 	}
 
 	function scatterPlot() {
+		console.log('rerender');
 		let points: [number, number, string][];
-		console.log(dataGroups[Indexes.aspectRatio]);
 		points = useIndexFilter(
 			zip(dataGroups[indexX], dataGroups[indexY], hashes) as [number, number, string][],
 		);
@@ -209,11 +218,8 @@
 			forceBased: '#9ACD32',
 			straightTree: '#EE82EE',
 		};
-		const levelMapCircle: {[layer in LayoutNestingLevels]: number} = {
-			inner: 3,
-			intermediate: 6,
-			root: 9,
-		};
+
+		let levelMapCircle: {[layer in LayoutNestingLevels]: number};
 		const widthFlag = 4;
 		const heightFlag = widthFlag * widthFlag;
 
@@ -308,20 +314,30 @@
 
 		// Now, actually render all the dots
 		d3.select('#points').selectAll('g').remove();
-		const selection = d3
-			.select('#points')
-			.selectAll('g')
-			.data(points)
-			.enter()
-			.append('g')
-			.attr('class', 'point-group');
-		if (false) {
+		const selection = d3.select('#points').selectAll('g').data(points).enter().append('g');
+		if (dotType === DotType.NestedCircles) {
+			levelMapCircle = {
+				inner: 3,
+				intermediate: 6,
+				root: 9,
+			};
 			drawCircle(selection, 'root');
 			drawCircle(selection, 'intermediate');
 			drawCircle(selection, 'inner');
-		}
-		{
-			selection.attr('transform', d => `translate(${scaleX(d[0])} ${scaleY(d[1])})`);
+		} else if (dotType === DotType.OnlyRoot) {
+			levelMapCircle = {root: 9, inner: 9, intermediate: 9};
+			drawCircle(selection, 'root');
+		} else if (dotType === DotType.OnlyIntermediate) {
+			levelMapCircle = {root: 9, inner: 9, intermediate: 9};
+			drawCircle(selection, 'intermediate');
+		} else if (dotType === DotType.OnlyLeaf) {
+			levelMapCircle = {root: 9, inner: 9, intermediate: 9};
+			drawCircle(selection, 'inner');
+		} else {
+			levelMapCircle = {inner: 0, intermediate: 0, root: 0};
+			selection
+				.attr('transform', d => `translate(${scaleX(d[0])} ${scaleY(d[1])})`)
+				.attr('class', 'point-group');
 			drawFlag(selection, 'root');
 			drawFlag(selection, 'intermediate');
 			drawFlag(selection, 'inner');
@@ -420,6 +436,30 @@
 			<div style="color: #4682B4">layerTree</div>
 			<div style="color: #FF6347">circular</div>
 			<div style="color: #9ACD32">forceBased</div>
+		</div>
+		<div class="flex flex-col">
+			<div class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+				Visualize datapoints:
+			</div>
+			{#each Object.values(DotType) as d}
+				{#if typeof d === 'number'}
+					<div class="ml-5">
+						<input
+							type="radio"
+							id="{d}-radio-button"
+							value={d}
+							name="dotType"
+							on:change={event => {
+								dotType = Number(event.currentTarget.value);
+								console.log(dotType);
+								rerender();
+							}}
+							checked={d === dotType}
+						/>
+						<label for="{d}-radio-button">{DotType[d]}</label>
+					</div>
+				{/if}
+			{/each}
 		</div>
 	</div>
 	<div class="flex flex-row h-full">
