@@ -111,6 +111,7 @@
 		unrelatedOverlaps,
 	}
 
+	// Global constants to store how data should be scaled
 	const indexesToScaleLinear = [
 		Indexes.nodeOverlaps,
 		Indexes.area,
@@ -208,11 +209,13 @@
 			forceBased: '#9ACD32',
 			straightTree: '#EE82EE',
 		};
-		const levelMap: {[layer in LayoutNestingLevels]: number} = {
+		const levelMapCircle: {[layer in LayoutNestingLevels]: number} = {
 			inner: 3,
 			intermediate: 6,
 			root: 9,
 		};
+		const widthFlag = 4;
+		const heightFlag = widthFlag * widthFlag;
 
 		// Helper function
 		function drawCircle(
@@ -227,7 +230,7 @@
 					return colorMap[layout];
 				})
 				.attr('fill-opacity', 1)
-				.attr('r', levelMap[level])
+				.attr('r', levelMapCircle[level])
 				.attr('cx', d => scaleX(d[0]))
 				.attr('cy', d => scaleY(d[1]))
 				.on('click', function (_, d) {
@@ -239,12 +242,57 @@
 				.attr('class', `${level}-dot`);
 		}
 
+		function drawFlag(
+			selection: d3.Selection<SVGGElement, [number, number, string], d3.BaseType, unknown>,
+			level: LayoutNestingLevels,
+		) {
+			const offsetX =
+				level === 'root'
+					? -1.5 * widthFlag
+					: level === 'intermediate'
+					? -0.5 * widthFlag
+					: 0.5 * widthFlag;
+
+			selection
+				.append('rect')
+				.attr('fill', d => {
+					const h = d[2];
+					const layout = data.jsonData[h][`${level}Layout`];
+					return colorMap[layout];
+				})
+				.attr('fill-opacity', 1)
+				.attr('x', d => offsetX - 0.001)
+				.attr('y', d => 0.5 * heightFlag)
+				.attr('width', widthFlag)
+				.attr('height', heightFlag)
+				.on('click', function (_, d) {
+					const hash = d[2];
+					const jsonData = data.jsonData[hash];
+					const text = `${hash}`;
+					d3.select('#tooltip-div').text(text);
+				});
+		}
+
 		// Now, actually render all the dots
 		d3.select('#points').selectAll('g').remove();
-		const selection = d3.select('#points').selectAll('g').data(points).enter().append('g');
-		drawCircle(selection, 'root');
-		drawCircle(selection, 'intermediate');
-		drawCircle(selection, 'inner');
+		const selection = d3
+			.select('#points')
+			.selectAll('g')
+			.data(points)
+			.enter()
+			.append('g')
+			.attr('class', 'point-group');
+		if (false) {
+			drawCircle(selection, 'root');
+			drawCircle(selection, 'intermediate');
+			drawCircle(selection, 'inner');
+		}
+		{
+			selection.attr('transform', d => `translate(${scaleX(d[0])} ${scaleY(d[1])})`);
+			drawFlag(selection, 'root');
+			drawFlag(selection, 'intermediate');
+			drawFlag(selection, 'inner');
+		}
 
 		// Finally, allow zooming
 		const container = d3.select('.vis');
@@ -252,12 +300,17 @@
 			d3.zoom<any, any>().on('zoom', ({transform}) => {
 				container.attr('transform', transform);
 				(['root', 'intermediate', 'inner'] as LayoutNestingLevels[]).forEach(level => {
-					const sel = d3
-						.select('#points')
+					d3.select('#points')
 						.selectAll(`.${level}-dot`)
-						.attr('r', levelMap[level] / transform.k);
-					console.log({sel});
+						.attr('r', levelMapCircle[level] / transform.k);
 				});
+				d3.select('#points')
+					.selectAll(`.point-group`)
+					.attr(
+						'transform',
+						(d: any) => `translate(${scaleX(d[0])} ${scaleY(d[1])})
+					scale(${1 / transform.k} ${1 / transform.k})`,
+					);
 			}),
 		);
 	}
@@ -275,7 +328,7 @@
 	});
 </script>
 
-<div class="p-6 h-screen w-screen">
+<div class="p-6 h-full w-full overflow-hidden">
 	<Heading>Explore layout evaluations</Heading>
 	<div class="flex flex-row items-center">
 		<div class="flex flex-col items-center">
@@ -330,17 +383,20 @@
 			/>
 		</div>
 		<div class="w-500 ml-5">
+			<div class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Legend:</div>
 			<div style="color: #4682B4">layerTree</div>
 			<div style="color: #FF6347">circular</div>
 			<div style="color: #9ACD32">forceBased</div>
 		</div>
-		<div class="w-500 ml-5" id="tooltip-div" />
 	</div>
-	<svg id="canvas" class="w-full h-full">
-		<g class="vis" transform="translate(50,50)">
-			<g class="axis x" />
-			<g class="axis y" />
-			<g id="points" />
-		</g>
-	</svg>
+	<div class="flex flex-row h-full">
+		<svg id="canvas" class="h-full w-4/5">
+			<g class="vis" transform="translate(50,50)">
+				<g class="axis x" />
+				<g class="axis y" />
+				<g id="points" />
+			</g>
+		</svg>
+		<div class="w-1/5 overflow-auto" id="tooltip-div" />
+	</div>
 </div>
