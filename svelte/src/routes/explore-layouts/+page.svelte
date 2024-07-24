@@ -217,6 +217,49 @@
 		const widthFlag = 4;
 		const heightFlag = widthFlag * widthFlag;
 
+		// Tooltip
+		function tooltipHandler(_: any, d: [number, number, string]) {
+			const hash = d[2];
+			const jsonData = data.jsonData[hash];
+
+			let text = `<p><strong>Datapoint:</strong> ${hash}</p>
+			<br /><hr /> <br />
+			<p><strong>Edge ports: </strong>${jsonData.showEdgePorts}</p>
+			<p><strong>Node size: </strong>${jsonData.minimumNodeSize}</p>
+			<p><strong>Node padding: </strong>${jsonData.nodePadding}</p>`;
+
+			(['inner', 'intermediate', 'root'] as LayoutNestingLevels[]).forEach(l => {
+				const layoutType = jsonData[`${l}Layout`];
+				text += `<br /><hr /> <br />
+				<div style="border: 2px solid ${colorMap[layoutType]}; padding: 10px; border-radius: 15px">
+				<p><strong>${l}Layout</strong></p>
+				<p><strong>Layout type: </strong>${layoutType}</p>
+				<p><strong>Node margin: </strong>${jsonData.nodeMargin[l]}</p>`;
+
+				if (layoutType === 'layerTree') {
+					text += `
+					<hr />
+					<p><strong>Uniform node sizes: </strong>${jsonData.layoutSettings[l].uniformSize}</p>`;
+				}
+
+				if (layoutType === 'forceBased') {
+					text += `
+					<hr />
+					<p><strong>Collide rectangles: </strong>${jsonData.layoutSettings[l].collideRectangles}</p>
+					<p><strong>Center force: </strong>${JSON.stringify(
+						jsonData.layoutSettings[l].centerForceStrength,
+					)}</p>
+					<p><strong>Link force: </strong>${JSON.stringify(jsonData.layoutSettings[l].linkForce)}</p>
+					<p><strong>Many body force: </strong>${JSON.stringify(jsonData.layoutSettings[l].manyBodyForce)}</p>
+					`;
+				}
+
+				text += '</div>';
+			});
+
+			d3.select('#tooltip-div').html(text);
+		}
+
 		// Helper function
 		function drawCircle(
 			selection: d3.Selection<SVGGElement, [number, number, string], d3.BaseType, unknown>,
@@ -233,12 +276,7 @@
 				.attr('r', levelMapCircle[level])
 				.attr('cx', d => scaleX(d[0]))
 				.attr('cy', d => scaleY(d[1]))
-				.on('click', function (_, d) {
-					const hash = d[2];
-					const jsonData = data.jsonData[hash];
-					const text = `${hash}`;
-					d3.select('#tooltip-div').text(text);
-				})
+				.on('click', tooltipHandler)
 				.attr('class', `${level}-dot`);
 		}
 
@@ -262,15 +300,10 @@
 				})
 				.attr('fill-opacity', 1)
 				.attr('x', d => offsetX - 0.001)
-				.attr('y', d => 0.5 * heightFlag)
+				.attr('y', d => -0.5 * heightFlag)
 				.attr('width', widthFlag)
 				.attr('height', heightFlag)
-				.on('click', function (_, d) {
-					const hash = d[2];
-					const jsonData = data.jsonData[hash];
-					const text = `${hash}`;
-					d3.select('#tooltip-div').text(text);
-				});
+				.on('click', tooltipHandler);
 		}
 
 		// Now, actually render all the dots
@@ -397,6 +430,6 @@
 				<g id="points" />
 			</g>
 		</svg>
-		<div class="w-1/5 overflow-auto" id="tooltip-div" />
+		<div class="w-1/5 overflow-y-auto h-4/5" id="tooltip-div" />
 	</div>
 </div>
