@@ -52,5 +52,10 @@
 		"object-hash": "^3.0.0",
 		"uuid": "^9.0.1",
 		"webcola": "^3.4.0"
+	},
+	"browser": {
+		"fs": false,
+		"os": false,
+		"path": false
 	}
 }
