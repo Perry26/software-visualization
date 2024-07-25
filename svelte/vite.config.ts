@@ -12,4 +12,5 @@ export default defineConfig({
 			$types: '/src/types',
 		},
 	},
+	assetsInclude: ['**/*.txt'],
 });
