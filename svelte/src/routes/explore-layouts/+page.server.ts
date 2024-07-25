@@ -6,7 +6,13 @@ const localMode = false;
 const serverMode = true;
 const writeMode = false;
 
-export function load(_) {
+export function load(_): {
+	evaluationResults: (number | string)[][];
+	header: string[];
+	jsonData: {
+		[hash: string]: DrawSettingsInterface;
+	};
+} {
 	if (localMode) {
 		/*
 		const string = readFileSync('../python/output-data/evaluationResults.csv').toString();
@@ -47,4 +53,5 @@ export function load(_) {
 	} else if (serverMode) {
 		return JSON.parse(data);
 	}
+	throw new Error();
 }

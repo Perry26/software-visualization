@@ -5,7 +5,7 @@
 	import unzip from 'lodash/unzip.js';
 	import range from 'lodash/range.js';
 	import {onMount} from 'svelte';
-	import {type LayoutNestingLevels, type LayoutOptions} from '$types';
+	import {type DrawSettingsInterface, type LayoutNestingLevels, type LayoutOptions} from '$types';
 
 	export let data;
 
@@ -64,6 +64,8 @@
 		});
 
 		indexFilter = [...intersection];
+
+		console.log({i: indexFilter.length});
 	}
 
 	function useIndexFilter<T>(points: T[]) {
@@ -193,7 +195,6 @@
 	}
 
 	function scatterPlot() {
-		console.log('rerender');
 		let points: [number, number, string][];
 		points = useIndexFilter(
 			zip(dataGroups[indexX], dataGroups[indexY], hashes) as [number, number, string][],
@@ -218,6 +219,26 @@
 			forceBased: '#9ACD32',
 			straightTree: '#EE82EE',
 		};
+
+		function useColorMap(data: DrawSettingsInterface, nestingLevel: LayoutNestingLevels) {
+			// if (data[`${nestingLevel}Layout`] !== 'layerTree') {
+			// 	return '#FFFAFA';
+			// } else {
+			// 	return `hsl(207, ${data.nodeMargin[nestingLevel]}%, 49%)`;
+			// }
+
+			switch (data[`${nestingLevel}Layout`]) {
+				case 'layerTree':
+					//return data.layoutSettings[nestingLevel].uniformSize ? '#6A5ACD' : '#4682B4';
+					return '#4682B4';
+				case 'circular':
+					return '#FF6347';
+				case 'forceBased':
+					return '#9ACD32';
+				case 'straightTree':
+					return '#EE82EE';
+			}
+		}
 
 		let levelMapCircle: {[layer in LayoutNestingLevels]: number};
 		const widthFlag = 4;
@@ -274,9 +295,8 @@
 			selection
 				.append('circle')
 				.attr('fill', d => {
-					const h = d[2];
-					const layout = data.jsonData[h][`${level}Layout`];
-					return colorMap[layout];
+					const hash = d[2];
+					return useColorMap(data.jsonData[hash], level);
 				})
 				.attr('fill-opacity', 1)
 				.attr('r', levelMapCircle[level])
@@ -300,9 +320,8 @@
 			selection
 				.append('rect')
 				.attr('fill', d => {
-					const h = d[2];
-					const layout = data.jsonData[h][`${level}Layout`];
-					return colorMap[layout];
+					const hash = d[2];
+					return useColorMap(data.jsonData[hash], level);
 				})
 				.attr('fill-opacity', 1)
 				.attr('x', d => offsetX - 0.001)
@@ -367,7 +386,7 @@
 	function rerender() {
 		makeIndexFilter();
 		// TODO refactor scale logic, should not require retransforming data
-		({scales} = transformData());
+		({scales, dataGroups, hashes} = transformData());
 		scatterPlot();
 	}
 
