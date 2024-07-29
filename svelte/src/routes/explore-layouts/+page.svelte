@@ -90,15 +90,17 @@
 		</div>
 		<div class="w-500 ml-5">
 			<div class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Legend:</div>
-			<div style="color: #4682B4">layerTree</div>
-			<div style="color: #FF6347">circular</div>
-			<div style="color: #9ACD32">forceBased</div>
+			<div style="color: #4682B4">LayerTree</div>
+			<div style="color: #FF6347">Circular</div>
+			<div style="color: #9ACD32">ForceBased</div>
+			<div style="color: #B8860B">True</div>
+			<div style="color: #8A2BE2">False</div>
 		</div>
 		<div class="flex flex-col">
 			<div class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-				Visualize datapoints:
+				Visualize layout-algorithm:
 			</div>
-			{#each Object.values(DotType) as d}
+			{#each [0, 1, 2, 3, 4] as d}
 				{#if typeof d === 'number'}
 					<div class="ml-5">
 						<input
@@ -108,7 +110,26 @@
 							name="dotType"
 							on:change={event => {
 								dotType = Number(event.currentTarget.value);
-								console.log(dotType);
+								rerender();
+							}}
+							checked={d === dotType}
+						/>
+						<label for="{d}-radio-button">{DotType[d]}</label>
+					</div>
+				{/if}
+			{/each}
+		</div>
+		<div class="flex flex-col">
+			{#each [5, 6, 7, 8, 9, 10] as d}
+				{#if typeof d === 'number'}
+					<div class="ml-5">
+						<input
+							type="radio"
+							id="{d}-radio-button"
+							value={d}
+							name="dotType"
+							on:change={event => {
+								dotType = Number(event.currentTarget.value);
 								rerender();
 							}}
 							checked={d === dotType}

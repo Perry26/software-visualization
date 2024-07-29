@@ -6,6 +6,12 @@ export enum DotType {
 	OnlyRoot,
 	OnlyIntermediate,
 	OnlyLeaf,
+	EdgePorts,
+	NodeSize,
+	NodePadding,
+	NodeMarginRoot,
+	NodeMarginIntermediate,
+	NodeMarginLeaf,
 }
 
 export interface ServerDataType {

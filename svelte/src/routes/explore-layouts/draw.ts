@@ -11,33 +11,58 @@ const width = 500,
 /**
  * Variable storing which color represents which layout
  */
-const colorMap: {[layout in LayoutOptions]: string} = {
-	layerTree: '#4682B4',
-	circular: '#FF6347',
-	forceBased: '#9ACD32',
-	straightTree: '#EE82EE',
+const colorMap: {[layout in LayoutOptions]: {hex: string; h: number; s: number; l: number}} = {
+	layerTree: {hex: '#4682B4', h: 207, s: 44, l: 49},
+	circular: {hex: '#FF6347', h: 9, s: 100, l: 64},
+	forceBased: {hex: '#9ACD32', h: 80, s: 61, l: 50},
+	straightTree: {hex: '#EE82EE', h: 300, s: 76, l: 72},
 };
 
 /** F
  * unction to color the points on the scatterplot
  */
-function useColorMap(data: DrawSettingsInterface, nestingLevel: LayoutNestingLevels) {
-	// if (data[`${nestingLevel}Layout`] !== 'layerTree') {
+function useColorMap(
+	data: DrawSettingsInterface,
+	nestingLevel: LayoutNestingLevels,
+	dotType?: DotType,
+) {
+	const layout = data[`${nestingLevel}Layout`];
+
+	if (dotType === DotType.EdgePorts) {
+		return data.showEdgePorts ? '#B8860B' : '#8A2BE2';
+	}
+	if (dotType === DotType.NodeSize) {
+		return `hsl(207, ${data.minimumNodeSize}%, 49%)`;
+	}
+	if (dotType === DotType.NodePadding) {
+		return `hsl(207, ${data.minimumNodeSize}%, 49%)`;
+	}
+	if (dotType === DotType.NodeMarginRoot) {
+		return `hsl(207, ${data.nodeMargin.root}%, 49%)`;
+	}
+	if (dotType === DotType.NodeMarginIntermediate) {
+		return `hsl(207, ${data.nodeMargin.intermediate}%, 49%)`;
+	}
+	if (dotType === DotType.NodeMarginLeaf) {
+		return `hsl(207, ${data.nodeMargin.inner}%, 49%)`;
+	}
+
+	// if (data[`${nestingLevel}Layout`] !== 'circular') {
 	// 	return '#FFFAFA';
 	// } else {
 	// 	return `hsl(207, ${data.nodeMargin[nestingLevel]}%, 49%)`;
 	// }
 
-	switch (data[`${nestingLevel}Layout`]) {
+	switch (layout) {
 		case 'layerTree':
 			//return data.layoutSettings[nestingLevel].uniformSize ? '#6A5ACD' : '#4682B4';
-			return colorMap.layerTree;
+			return colorMap.layerTree.hex;
 		case 'circular':
-			return colorMap.circular;
+			return colorMap.circular.hex;
 		case 'forceBased':
-			return colorMap.forceBased;
+			return colorMap.forceBased.hex;
 		case 'straightTree':
-			return colorMap.straightTree;
+			return colorMap.straightTree.hex;
 	}
 }
 
@@ -59,7 +84,7 @@ function sidebarGenerator(jsonData: JsonDataType) {
 		(['inner', 'intermediate', 'root'] as LayoutNestingLevels[]).forEach(l => {
 			const layoutType = jsonDataThis[`${l}Layout`];
 			text += `<br /><hr /> <br />
-				<div style="border: 2px solid ${colorMap[layoutType]}; padding: 10px; border-radius: 15px">
+				<div style="border: 2px solid ${colorMap[layoutType].hex}; padding: 10px; border-radius: 15px">
 				<p><strong>${l}Layout</strong></p>
 				<p><strong>Layout type: </strong>${layoutType}</p>
 				<p><strong>Node margin: </strong>${jsonDataThis.nodeMargin[l]}</p>`;
@@ -128,12 +153,13 @@ export function scatterPlot(
 	function drawCircle(
 		selection: d3.Selection<SVGGElement, [number, number, string], d3.BaseType, unknown>,
 		level: LayoutNestingLevels,
+		dotType?: DotType,
 	) {
 		selection
 			.append('circle')
 			.attr('fill', d => {
 				const hash = d[2];
-				return useColorMap(jsonData[hash], level);
+				return useColorMap(jsonData[hash], level, dotType);
 			})
 			.attr('fill-opacity', 1)
 			.attr('r', levelMapCircle[level])
@@ -189,7 +215,7 @@ export function scatterPlot(
 	} else if (dotType === DotType.OnlyLeaf) {
 		levelMapCircle = {root: 9, inner: 9, intermediate: 9};
 		drawCircle(selection, 'inner');
-	} else {
+	} else if (dotType === DotType.Flag) {
 		levelMapCircle = {inner: 0, intermediate: 0, root: 0};
 		selection
 			.attr('transform', d => `translate(${scaleX(d[0])} ${scaleY(d[1])})`)
@@ -197,6 +223,9 @@ export function scatterPlot(
 		drawFlag(selection, 'root');
 		drawFlag(selection, 'intermediate');
 		drawFlag(selection, 'inner');
+	} else {
+		levelMapCircle = {root: 9, inner: 9, intermediate: 9};
+		drawCircle(selection, 'inner', dotType);
 	}
 
 	// Finally, allow zooming
