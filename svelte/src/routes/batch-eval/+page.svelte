@@ -165,14 +165,12 @@
 				const canvas: SVGElement = document.createElement('svg') as unknown as SVGElement;
 				canvasContainer.appendChild(canvas);
 
-				// No execute all of the steps
+				// Now execute all of the steps
 				const convertedData = converter(rawData, {
 					filterPrimitives: true,
 					filterAllEncompassingNodes: true,
 				});
-
 				const graphData = createGraphData(convertedData);
-
 				filter(
 					{
 						collapsedNodes: [],
