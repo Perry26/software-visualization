@@ -67,7 +67,7 @@ function useColorMap(
 }
 
 /**
- * Builds a function to populate the sidebar.
+ * Builds a function to populate the sidebars
  * Resulting function is to be used as an event callback with the proper d3-data associated.
  */
 function sidebarGenerator(jsonData: JsonDataType) {
@@ -113,6 +113,22 @@ function sidebarGenerator(jsonData: JsonDataType) {
 		});
 
 		d3.select('#tooltip-div').html(text);
+
+		// All image as svg
+		fetch(`/svg/${hash}.svg`).then(response => {
+			response.text().then(s => {
+				document.getElementById('svg-container')!.innerHTML = s;
+				const svg = document.getElementById('svg-container')!.children[0];
+
+				// Add zoom
+				svg.innerHTML = `<g id="zoom-canvas">${svg.innerHTML}</g>`;
+				d3.select('#zoom-canvas').call(
+					d3.zoom<any, any>().on('zoom', ({transform}) => {
+						d3.select('#zoom-canvas').attr('transform', transform);
+					}),
+				);
+			});
+		});
 	};
 }
 

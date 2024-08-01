@@ -11,6 +11,40 @@
 	let indexFilterCutOff: number | null = 4000;
 	let dotType: DotType = DotType.Flag;
 
+	const radioButtons: [string, [string, DotType][]][] = [
+		[
+			'All layout algorithms',
+			[
+				['Flag', DotType.Flag],
+				['Nested Circles', DotType.NestedCircles],
+			],
+		],
+		[
+			'Layout algorithm for only 1 layer',
+			[
+				['Root', DotType.OnlyRoot],
+				['Intermediate', DotType.OnlyIntermediate],
+				['Leaf', DotType.OnlyLeaf],
+			],
+		],
+		[
+			'Node margin for layer',
+			[
+				['Root', DotType.NodeMarginRoot],
+				['Intermediate', DotType.NodeMarginIntermediate],
+				['Leaf', DotType.NodeMarginLeaf],
+			],
+		],
+		[
+			'Other variables:',
+			[
+				['Edge-ports', DotType.EdgePorts],
+				['Node size', DotType.NodeSize],
+				['Node padding', DotType.NodePadding],
+			],
+		],
+	];
+
 	function rerender() {
 		const transformed1 = transformData(data);
 		const transformed2 = filterIndexes(
@@ -88,6 +122,36 @@
 				on:change={rerender}
 			/>
 		</div>
+		<div class="flex flex-col items-start m-5">
+			<div class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+				Use color for visualizing ...
+			</div>
+			<div class="flex flex-row">
+				{#each radioButtons as [groupLabel, buttons]}
+					<div class="flex flex-col">
+						<div class="block mb-2 mr-5 text-sm font-medium text-gray-900 dark:text-white">
+							{groupLabel}
+						</div>
+						{#each buttons as [label, dot]}
+							<div class="ml-5">
+								<input
+									type="radio"
+									id="{dot}-radio-button"
+									value={dot}
+									name="dotType"
+									on:change={event => {
+										dotType = Number(event.currentTarget.value);
+										rerender();
+									}}
+									checked={dot === dotType}
+								/>
+								<label for="{dot}-radio-button">{label}</label>
+							</div>
+						{/each}
+					</div>
+				{/each}
+			</div>
+		</div>
 		<div class="w-500 ml-5">
 			<div class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Legend:</div>
 			<div style="color: #4682B4">LayerTree</div>
@@ -96,58 +160,16 @@
 			<div style="color: #B8860B">True</div>
 			<div style="color: #8A2BE2">False</div>
 		</div>
-		<div class="flex flex-col">
-			<div class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-				Visualize layout-algorithm:
-			</div>
-			{#each [0, 1, 2, 3, 4] as d}
-				{#if typeof d === 'number'}
-					<div class="ml-5">
-						<input
-							type="radio"
-							id="{d}-radio-button"
-							value={d}
-							name="dotType"
-							on:change={event => {
-								dotType = Number(event.currentTarget.value);
-								rerender();
-							}}
-							checked={d === dotType}
-						/>
-						<label for="{d}-radio-button">{DotType[d]}</label>
-					</div>
-				{/if}
-			{/each}
-		</div>
-		<div class="flex flex-col">
-			{#each [5, 6, 7, 8, 9, 10] as d}
-				{#if typeof d === 'number'}
-					<div class="ml-5">
-						<input
-							type="radio"
-							id="{d}-radio-button"
-							value={d}
-							name="dotType"
-							on:change={event => {
-								dotType = Number(event.currentTarget.value);
-								rerender();
-							}}
-							checked={d === dotType}
-						/>
-						<label for="{d}-radio-button">{DotType[d]}</label>
-					</div>
-				{/if}
-			{/each}
-		</div>
 	</div>
 	<div class="flex flex-row h-full">
-		<svg id="canvas" class="h-full w-4/5">
+		<svg id="canvas" class="h-full w-2/5">
 			<g class="vis" transform="translate(50,50)">
 				<g class="axis x" />
 				<g class="axis y" />
 				<g id="points" />
 			</g>
 		</svg>
+		<div class="w-2/5 h-full" id="svg-container" />
 		<div class="w-1/5 overflow-y-auto h-4/5" id="tooltip-div" />
 	</div>
 </div>

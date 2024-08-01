@@ -13,4 +13,10 @@ export default defineConfig({
 		},
 	},
 	assetsInclude: ['**/*.txt'],
+	server: {
+		fs: {
+			//strict: false,
+			allow: ['..'],
+		},
+	},
 });
