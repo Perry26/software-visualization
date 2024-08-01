@@ -3,7 +3,8 @@
 	import {onMount} from 'svelte';
 	import {DotType} from './types.js';
 	import {filterIndexes, transformData} from './transform-data.js';
-	import {scatterPlot} from './draw.js';
+	import {hslFn, scatterPlot} from './draw.js';
+	import test from 'node:test';
 
 	export let data;
 	let indexX: number = 0;
@@ -70,7 +71,7 @@
 
 <div class="p-6 h-full w-full overflow-hidden">
 	<Heading>Explore layout evaluations</Heading>
-	<div class="flex flex-row items-center">
+	<div class="flex flex-row items-start">
 		<div class="flex flex-col items-center">
 			<label
 				for="x-select-val"
@@ -122,7 +123,7 @@
 				on:change={rerender}
 			/>
 		</div>
-		<div class="flex flex-col items-start m-5">
+		<div class="flex flex-col items-start mr-5 ml-5">
 			<div class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
 				Use color for visualizing ...
 			</div>
@@ -154,11 +155,26 @@
 		</div>
 		<div class="w-500 ml-5">
 			<div class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Legend:</div>
-			<div style="color: #4682B4">LayerTree</div>
-			<div style="color: #FF6347">Circular</div>
-			<div style="color: #9ACD32">ForceBased</div>
-			<div style="color: #B8860B">True</div>
-			<div style="color: #8A2BE2">False</div>
+			{#if [DotType.Flag, DotType.NestedCircles, DotType.OnlyRoot, DotType.OnlyIntermediate, DotType.OnlyLeaf].includes(dotType)}
+				<div style="color: #4682B4">LayerTree</div>
+				<div style="color: #FF6347">Circular</div>
+				<div style="color: #9ACD32">ForceBased</div>
+			{/if}
+			{#if [DotType.EdgePorts].includes(dotType)}
+				<div style="color: #B8860B">True</div>
+				<div style="color: #8A2BE2">False</div>
+			{/if}
+			{#if [DotType.NodeSize, DotType.NodePadding, DotType.NodeMarginRoot, DotType.NodeMarginIntermediate, DotType.NodeMarginLeaf].includes(dotType)}
+				<div class="flex flex-row">
+					{#each [[0, 5, 10, 15, 20], [25, 30, 35, 40, 45], [50, 55, 60, 65, 70], [75, 80, 85, 90, 95], [100]] as ns}
+						<div class="flex flex-col mr-5">
+							{#each ns as n}
+								<div style="color: {hslFn(n)}">{n} px</div>
+							{/each}
+						</div>
+					{/each}
+				</div>
+			{/if}
 		</div>
 	</div>
 	<div class="flex flex-row h-full">

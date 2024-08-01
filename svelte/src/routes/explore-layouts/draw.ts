@@ -18,8 +18,13 @@ const colorMap: {[layout in LayoutOptions]: {hex: string; h: number; s: number; 
 	straightTree: {hex: '#EE82EE', h: 300, s: 76, l: 72},
 };
 
-/** F
- * unction to color the points on the scatterplot
+const scale90 = d3.scaleLinear([0, 100], [30, 90]);
+export function hslFn(val: number) {
+	return `hsl(207, ${scale90(val)}%, ${scale90(val)}%)`;
+}
+
+/**
+ * Function to color the points on the scatterplot
  */
 function useColorMap(
 	data: DrawSettingsInterface,
@@ -32,19 +37,19 @@ function useColorMap(
 		return data.showEdgePorts ? '#B8860B' : '#8A2BE2';
 	}
 	if (dotType === DotType.NodeSize) {
-		return `hsl(207, ${data.minimumNodeSize}%, 49%)`;
+		return hslFn(data.minimumNodeSize);
 	}
 	if (dotType === DotType.NodePadding) {
-		return `hsl(207, ${data.minimumNodeSize}%, 49%)`;
+		return hslFn(data.nodePadding);
 	}
 	if (dotType === DotType.NodeMarginRoot) {
-		return `hsl(207, ${data.nodeMargin.root}%, 49%)`;
+		return hslFn(data.nodeMargin.root);
 	}
 	if (dotType === DotType.NodeMarginIntermediate) {
-		return `hsl(207, ${data.nodeMargin.intermediate}%, 49%)`;
+		return hslFn(data.nodeMargin.intermediate);
 	}
 	if (dotType === DotType.NodeMarginLeaf) {
-		return `hsl(207, ${data.nodeMargin.inner}%, 49%)`;
+		return hslFn(data.nodeMargin.inner);
 	}
 
 	// if (data[`${nestingLevel}Layout`] !== 'circular') {
