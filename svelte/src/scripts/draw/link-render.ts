@@ -162,7 +162,10 @@ export function renderLinks(
 			'stroke',
 			l => `url(#${toHTMLToken(l.type)}Gradient${l.gradientDirection ? 'Reversed' : ''})`,
 		)
-		.attr('display', l => (drawSettings.shownEdgesType.get(l.type) ? 'inherit' : 'none'));
+		.attr('display', l => {
+			const res = drawSettings.shownEdgesType.get(l.type) ? 'inherit' : 'none';
+			return res;
+		});
 
 	// No exit, since we don't get all edges when updating
 

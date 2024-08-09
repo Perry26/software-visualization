@@ -107,9 +107,9 @@
 				flattenNodes = graphData.flattenNodes;
 
 				// Initialize shownEdgesType
-				extractAvailableEdgeType(graphData.links).forEach((e, index) =>
-					drawSettings.shownEdgesType.set(e, index == 0 ? true : false),
-				);
+				// extractAvailableEdgeType(graphData.links).forEach((e, index) =>
+				// 	drawSettings.shownEdgesType.set(e, index == 0 ? true : false),
+				// );
 
 				doReconvert = false;
 				doRefilter = true;
