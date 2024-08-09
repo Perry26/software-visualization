@@ -4,7 +4,6 @@
 	import {DotType} from './types.js';
 	import {filterIndexes, transformData} from './transform-data.js';
 	import {hslFn, scatterPlot} from './draw.js';
-	import test from 'node:test';
 
 	export let data;
 	let indexX: number = 0;
@@ -44,6 +43,7 @@
 				['Node padding', DotType.NodePadding],
 			],
 		],
+		// ['Forces', [['Forces', DotType.Forces]]],
 	];
 
 	function rerender() {
@@ -160,7 +160,7 @@
 				<div style="color: #FF6347">Circular</div>
 				<div style="color: #9ACD32">ForceBased</div>
 			{/if}
-			{#if [DotType.EdgePorts].includes(dotType)}
+			{#if [DotType.EdgePorts, DotType.Forces].includes(dotType)}
 				<div style="color: #B8860B">True</div>
 				<div style="color: #8A2BE2">False</div>
 			{/if}

@@ -51,6 +51,39 @@ function useColorMap(
 	if (dotType === DotType.NodeMarginLeaf) {
 		return hslFn(data.nodeMargin.inner);
 	}
+	if (dotType === DotType.Forces) {
+		// Centerforce should be disabled (x and y make a difference, though)
+		// Enable linkforce, don't mess with distance (prop to nodepadding?), strength
+		// Try both types for mbf
+
+		const get_random = (list: string[]) => {
+			return list[Math.floor(Math.random() * list.length)];
+		};
+
+		const opts: string[] = (['inner', 'intermediate', 'root'] as LayoutNestingLevels[]).flatMap(
+			l => {
+				if (data[`${l}Layout`] !== 'forceBased') {
+					return [];
+				}
+				//return [data.layoutSettings[l].centerForceStrength.enabled ? '#B8860B' : '#8A2BE2'];
+				// return data.layoutSettings[l].centerForceStrength.enabled
+				// 	? [hslFn(data.layoutSettings[l].centerForceStrength.y * 2)]
+				// 	: [];
+				return [
+					data.layoutSettings[l].manyBodyForce.type === 'None'
+						? '#8A2BE2'
+						: data.layoutSettings[l].manyBodyForce.type === 'Charge'
+						? '#B8860B'
+						: '#9ACD32',
+				];
+			},
+		);
+		if (opts.length === 0) {
+			return 'rgba(255, 250, 250, 0)';
+		} else {
+			return get_random(opts);
+		}
+	}
 
 	// if (data[`${nestingLevel}Layout`] !== 'circular') {
 	// 	return '#FFFAFA';

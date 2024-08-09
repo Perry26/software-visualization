@@ -12,6 +12,7 @@ export enum DotType {
 	NodeMarginRoot,
 	NodeMarginIntermediate,
 	NodeMarginLeaf,
+	Forces,
 }
 
 export interface ServerDataType {
