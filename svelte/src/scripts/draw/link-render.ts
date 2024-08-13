@@ -94,12 +94,16 @@ export function renderLinks(
 				return {
 					x: x + point.x,
 					y: y + point.y,
+					origin: point.origin,
 				};
 			}),
 		];
 
 		if (l.renderPoints.length < 2) {
-			l.renderPoints = [source, target];
+			l.renderPoints = [
+				{x: source.x, y: source.y},
+				{x: target.x, y: target.y},
+			];
 		}
 
 		// TODO fix error in  calculateIntersection

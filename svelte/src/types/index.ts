@@ -150,7 +150,7 @@ export interface GraphDataEdge {
 	labelCoordinates?: {x: number; y: number}[];
 
 	/** Set during rendering to remember */
-	renderPoints?: {x: number; y: number}[];
+	renderPoints?: {x: number; y: number; origin?: EdgeRoutingOrigin}[];
 }
 
 /** Routing information for edges.

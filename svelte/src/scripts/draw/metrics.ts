@@ -1,5 +1,11 @@
-import {getNode} from '$helper/graphdata-helpers';
-import {EdgeType, type GraphData, type GraphDataEdge, type GraphDataNode} from '$types';
+import {getAbsCoordinates, getNode} from '$helper/graphdata-helpers';
+import {
+	type EdgeRoutingOrigin,
+	EdgeType,
+	type GraphData,
+	type GraphDataEdge,
+	type GraphDataNode,
+} from '$types';
 import {
 	Point,
 	Vector,
@@ -13,6 +19,7 @@ import {
 	Matrix,
 	PlanarSet,
 } from '@flatten-js/core';
+import {deviation} from 'd3';
 
 function isAncestor(node: GraphDataNode, presumedParent: GraphDataNode) {
 	if (node.id === presumedParent.id) {
@@ -24,17 +31,13 @@ function isAncestor(node: GraphDataNode, presumedParent: GraphDataNode) {
 	}
 }
 
-/** Get the absolute x and y coordinates position of the given node */
-function getAbsPosition(node: GraphDataNode): {x: number; y: number} {
-	if (node.parent) {
-		const {x, y} = getAbsPosition(node.parent);
-		return {
-			x: node.x! + x,
-			y: node.y! + y,
-		};
-	} else {
-		return {x: node.x ?? 0, y: node.y ?? 0};
-	}
+function segmentsAreContiguous(s1: Segment, s2: Segment): boolean {
+	return (
+		s1.start.equalTo(s2.start) ||
+		s1.start.equalTo(s2.end) ||
+		s1.end.equalTo(s2.start) ||
+		s1.end.equalTo(s2.end)
+	);
 }
 
 /** Calculates the angle between 2 intersecting line segments */
@@ -61,44 +64,50 @@ export class LayoutMetrics {
 		if (!this.data) {
 			throw new Error('Data for evaluator not found');
 		}
+		console.log({
+			edges: this.data.links.filter(l => l.type === EdgeType.calls).length,
+			nodes: Object.keys(this.data.nodesDict).length,
+		});
 
 		// Prepare data
 		// Line segments
-		const segments = this.data.links
+		const segments: Segment[] = [];
+		const usedPairs: Set<[EdgeRoutingOrigin, EdgeRoutingOrigin]> = new Set();
+		this.data.links
 			.filter(l => l.type === EdgeType.calls)
-			.flatMap(l => {
-				const res: {segment: Segment; edge: GraphDataEdge}[] = [];
+			.forEach(l => {
 				for (let i = 0; i < l.renderPoints!.length - 1; i++) {
-					const p1 = new Point(l.renderPoints![i].x, l.renderPoints![i].y);
-					const p2 = new Point(l.renderPoints![i + 1].x, l.renderPoints![i + 1].y);
-					const segment = new Segment(p1, p2);
-					res.push({segment, edge: l});
+					const source = l.renderPoints![i].origin!;
+					const target = l.renderPoints![i + 1].origin!;
+					if (!usedPairs.has([source, target])) {
+						usedPairs.add([source, target]);
+
+						const s = getAbsCoordinates(source as never);
+						const t = getAbsCoordinates(target as never);
+						segments.push(new Segment(new Point(s.x, s.y), new Point(t.x, t.y)));
+					}
 				}
-				return res;
 			});
 
 		// Segment length
-		const averageSegment =
-			segments.reduce((acc, value) => acc + value.segment.length, 0) / segments.length;
+		const averageSegment = segments.reduce((acc, value) => acc + value.length, 0) / segments.length;
 		const averageSegmentDifference =
 			segments
-				.map(s => Math.abs(s.segment.length - averageSegment))
+				.map(s => Math.abs(s.length - averageSegment))
 				.reduce((acc, value) => acc + value, 0) / segments.length;
 
 		// Calculate intersections
 		// Line segments
 		let lineLineIntersectCount = 0;
 		let totalLineAngle = 0;
-		let fullLineOverlapping = 0; // Chances of this going up are extremely slim
 		for (let i = 0; i < segments.length; i++) {
 			for (let j = i + 1; j < segments.length; j++) {
-				const intersect = segments[i].segment.intersect(segments[j].segment);
-				if (intersect.length > 0) {
-					lineLineIntersectCount++;
-					totalLineAngle += Math.abs(lineAngle(segments[i].segment, segments[j].segment));
-				}
-				if (intersect.length > 1) {
-					fullLineOverlapping++;
+				if (!segmentsAreContiguous(segments[i], segments[j])) {
+					const intersect = segments[i].intersect(segments[j]);
+					if (intersect.length > 0) {
+						lineLineIntersectCount++;
+						totalLineAngle += Math.abs(lineAngle(segments[i], segments[j]));
+					}
 				}
 			}
 		}
@@ -108,7 +117,7 @@ export class LayoutMetrics {
 		let rectangleOverlappingCount = 0;
 		function rec(nodes: GraphDataNode[]): {box: Box; node: GraphDataNode}[] {
 			const boxes = nodes.map(node => {
-				const {x, y} = getAbsPosition(node);
+				const {x, y} = getAbsCoordinates(node as never);
 				const box = new Box(
 					x - 0.5 * node.width!,
 					y - 0.5 * node.height!,
@@ -133,8 +142,21 @@ export class LayoutMetrics {
 		const boxes = rec(this.data.nodes);
 
 		// Lines overlapping with unrelated node
+		const segmentsExt = this.data.links
+			.filter(l => l.type === EdgeType.calls)
+			.flatMap(l => {
+				const res: {segment: Segment; edge: GraphDataEdge}[] = [];
+				for (let i = 0; i < l.renderPoints!.length - 1; i++) {
+					const p1 = new Point(l.renderPoints![i].x, l.renderPoints![i].y);
+					const p2 = new Point(l.renderPoints![i + 1].x, l.renderPoints![i + 1].y);
+					const segment = new Segment(p1, p2);
+					res.push({segment, edge: l});
+				}
+				return res;
+			});
+
 		let lineRectangleIntersectionCount = 0;
-		segments.map(({segment, edge}) => {
+		segmentsExt.map(({segment, edge}) => {
 			boxes.forEach(({box, node}) => {
 				const source = getNode(edge.source, this.data!.nodesDict);
 				const target = getNode(edge.target, this.data!.nodesDict);
@@ -169,18 +191,45 @@ export class LayoutMetrics {
 			}
 		}
 
-		// Line bends
-		const lineBends = this.data!.links.reduce((acc, l) => acc + l.routing.length, 0);
+		// Node density (Huang 2020)
+		const nodeDensityFn = (nodes: GraphDataNode[]): {std: number; weight: number}[] => {
+			if (nodes.length < 3) {
+				return [];
+			}
+			const {maxX, minX, maxY, minY} = this.getBoundaries(nodes);
+			const stepSizeX = (maxX - minX) / Math.ceil(Math.sqrt(nodes.length));
+			const stepSizeY = (maxY - minY) / Math.ceil(Math.sqrt(nodes.length));
+
+			const containers: number[] = [];
+			for (let x = minX; x < maxX; x += stepSizeX) {
+				for (let y = minY; y < maxY; y += stepSizeY) {
+					let hits = 0;
+					nodes.forEach(n => {
+						if (x <= n.x! && n.x! < x + stepSizeX && y <= n.y! && n.y! < y + stepSizeY) {
+							hits++;
+						}
+					});
+					containers.push(hits);
+				}
+			}
+
+			return [
+				{std: deviation(containers) ?? NaN, weight: (maxX - minX) * (maxY - minY)},
+				...nodes.flatMap(n => nodeDensityFn(n.members)),
+			];
+		};
+		const res = nodeDensityFn(this.data.nodes);
+		const totalWeight = res.reduce((acc, {weight}) => acc + weight, 0);
+		const nodeDensity = res.reduce((acc, {std, weight}) => acc + std * weight, 0) / totalWeight;
 
 		// Prepare output
 		const arr: [string, number][] = [
 			['Node overlaps', rectangleOverlappingCount],
 			['Node orthogonality', orthogonalNodeCount],
+			['Avg node density std', nodeDensity],
 			['Total area', area],
 			['Aspect ratio', aspectRatio],
-			['Line intersections', lineLineIntersectCount],
-			['Full line overlaps', fullLineOverlapping],
-			['Line bends', lineBends],
+			['(Unrelated) Line intersections', lineLineIntersectCount],
 			['Avg. length difference', averageSegmentDifference],
 			['Avg. radial distance on intersections', totalLineAngle],
 			['Lines overlapping unrelated nodes', lineRectangleIntersectionCount],
@@ -198,24 +247,18 @@ export class LayoutMetrics {
 		return {copyString, tableString, evaluationData: arr};
 	}
 
-	getBoundaries() {
+	getBoundaries(nodes?: GraphDataNode[]) {
 		if (!this.data) {
 			throw new Error('Data for evaluator not found');
 		}
+		if (!nodes) {
+			nodes = this.data.nodes;
+		}
 
-		const minX = this.data.nodes.reduce(
-			(acc, node) => Math.min(node.x! - 0.5 * node.width!, acc),
-			Infinity,
-		);
-		const minY = this.data.nodes.reduce(
-			(acc, node) => Math.min(node.y! - 0.5 * node.height!, acc),
-			Infinity,
-		);
-		const maxX = this.data.nodes.reduce(
-			(acc, node) => Math.max(node.x! + 0.5 * node.width!, acc),
-			-Infinity,
-		);
-		const maxY = this.data.nodes.reduce(
+		const minX = nodes.reduce((acc, node) => Math.min(node.x! - 0.5 * node.width!, acc), Infinity);
+		const minY = nodes.reduce((acc, node) => Math.min(node.y! - 0.5 * node.height!, acc), Infinity);
+		const maxX = nodes.reduce((acc, node) => Math.max(node.x! + 0.5 * node.width!, acc), -Infinity);
+		const maxY = nodes.reduce(
 			(acc, node) => Math.max(node.y! + 0.5 * node.height!, acc),
 			-Infinity,
 		);
