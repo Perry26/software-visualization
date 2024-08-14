@@ -17,21 +17,20 @@
 	//@ts-ignore
 	import * as hash from 'object-hash';
 
-	const amountOfIterations = 100;
+	const amountOfIterations = 50;
 
 	let files: FileList;
 	let hashFiles: FileList;
 	let canvasContainer: HTMLElement;
 
 	// Variables containing output
-	let evaluationOutput: string = '';
-	let hashOutput: string = '';
 	let debugOutput: string = '';
-	let settingsOutput: string = '';
+	let evaluationOutput: HTMLParagraphElement;
+	let hashOutput: HTMLParagraphElement;
+	let settingsOutput: HTMLParagraphElement;
 	let doneOutput: string = '';
-	let failedOutput: string = '';
-
-	const getSeparator = (i: number, j: number) => `-------${i}-${j}_______\n`;
+	let failedOutput: HTMLParagraphElement;
+	let svgOutput: HTMLParagraphElement;
 
 	async function parseFile(file: File) {
 		const rawData = JSON.parse(await file.text());
@@ -44,22 +43,20 @@
 	}
 
 	/** Generates random drawSettings */
-	function getRandomDrawSettings(
-		bannedHashes: string[],
-		randomRawData: RawInputType,
-	): DrawSettingsInterface {
+	function getRandomDrawSettings(bannedHashes: string[]): DrawSettingsInterface & {hash: string} {
 		const settings = makeDefaultDrawSettings();
+		//@ts-ignore we don't want to have this for hashing reasons
+		delete settings.shownEdgesType;
 
 		const layoutAlgorithms: LayoutOptions[] = ['layerTree', 'circular', 'forceBased'];
 		const nestingLevels: LayoutNestingLevels[] = ['inner', 'intermediate', 'root'];
 
-		settings.minimumNodeSize = random(0, 20) * 5;
-		settings.nodePadding = random(0, 20) * 5;
+		settings.minimumNodeSize = 50;
+		settings.nodePadding = random(1, 5) * 5;
 		settings.showEdgePorts = sample([true, false]);
-		settings.innerLayout = sample(layoutAlgorithms)!;
 
 		nestingLevels.forEach(level => {
-			settings.nodeMargin[level] = random(0, 20) * 5;
+			settings.nodeMargin[level] = random(1, 5) * 10;
 			settings[`${level}Layout`] = sample(layoutAlgorithms)!;
 
 			// Now it gets fun: layout specific settings :)
@@ -70,39 +67,24 @@
 				settings.layoutSettings[level].linkForce = {enabled: false, distance: 0, strength: 0};
 				settings.layoutSettings[level].manyBodyForce = {type: 'None', strength: 0};
 			} else {
-				if (sample([true, false])) {
-					settings.layoutSettings[level].centerForceStrength = {
-						enabled: true,
-						x: random(0, 20) * 2.5,
-						y: random(0, 20) * 2.5,
-					};
-				} else {
-					settings.layoutSettings[level].centerForceStrength = {
-						enabled: false,
-						x: 0,
-						y: 0,
-					};
-				}
-				settings.layoutSettings[level].collideRectangles = sample([true, false]);
-				if (sample([true, false])) {
-					settings.layoutSettings[level].linkForce = {
-						enabled: true,
-						distance: random(0, 20) * 5,
-						strength: random(0, 20) * 0.1,
-					};
-				} else {
-					settings.layoutSettings[level].linkForce = {
-						enabled: false,
-						distance: 0,
-						strength: 0,
-					};
-				}
+				settings.layoutSettings[level].centerForceStrength = {
+					enabled: true,
+					x: 0.1,
+					y: 0.1,
+				};
+				settings.layoutSettings[level].collideRectangles = true;
+
+				settings.layoutSettings[level].linkForce = {
+					enabled: true,
+					distance: settings.nodePadding * 1.5,
+					strength: 1,
+				};
 
 				const mbType = sample(['Charge', 'Rectangular', 'None']);
 				if (mbType !== 'None') {
 					settings.layoutSettings[level].manyBodyForce = {
 						type: mbType as any,
-						strength: random(0, 20) * 2.5,
+						strength: 20,
 					};
 				} else {
 					settings.layoutSettings[level].manyBodyForce = {
@@ -120,18 +102,25 @@
 		});
 
 		// Recurse if we're already explored this hash
-		const thisHash = hash({rawData: randomRawData, drawSettings: settings});
+		const thisHash = hash(settings);
 		if (bannedHashes.includes(thisHash)) {
-			return getRandomDrawSettings(bannedHashes, randomRawData);
+			return getRandomDrawSettings(bannedHashes);
 		} else {
 			bannedHashes.push(thisHash);
-			return settings;
+			return {...settings, hash: thisHash};
 		}
+	}
+
+	function writeOutput(parent: HTMLElement, output: string, hash: string, filename?: string) {
+		const element = document.createElement('p');
+		element.innerText = output;
+		element.setAttribute('id', `${hash}${filename ? `-${filename}` : ''}`);
+		parent.appendChild(element);
 	}
 
 	async function run(files: FileList) {
 		let bannedHashes: string[] = [];
-		if (hashFiles.length > 0) {
+		if (hashFiles && hashFiles.length > 0) {
 			bannedHashes = await parseHashFile(hashFiles[0]);
 		}
 
@@ -151,18 +140,20 @@
 
 		// Make object of all drawSettings we're considering
 		const variations = [...Array(amountOfIterations).keys()].map(_ =>
-			getRandomDrawSettings(bannedHashes, rawData[0]),
+			getRandomDrawSettings(bannedHashes),
 		);
 
 		// Now run the variations on all input files
 		variations.forEach(async (variation, i) => {
 			const drawSettings: DrawSettingsInterface = merge(makeDefaultDrawSettings(), variation);
-			settingsOutput += getSeparator(i, 0) + JSON.stringify(drawSettings) + '\n';
-			rawData.forEach(async (rawData, j) => {
-				const thisHash = hash({rawData, drawSettings});
+			const thisHash = variation.hash;
 
+			writeOutput(settingsOutput, JSON.stringify(drawSettings), thisHash);
+			writeOutput(hashOutput, thisHash, thisHash);
+			rawData.forEach(async (rawData, j) => {
 				// Prepare a container for rendering (the code requires that)
 				const canvas: SVGElement = document.createElement('svg') as unknown as SVGElement;
+				canvas.setAttribute('id', `${thisHash}-${rawData.fileName}`);
 				canvasContainer.appendChild(canvas);
 
 				// Now execute all of the steps
@@ -185,8 +176,7 @@
 					draw(canvas, graphData, drawSettings, noop, noop)(drawSettings);
 				} catch (e) {
 					debugOutput += 'Layout algorithm failed\n\n';
-					failedOutput += getSeparator(i, j) + thisHash + '\n' + rawData.fileName;
-					hashOutput += getSeparator(i, j) + thisHash + '\n';
+					writeOutput(failedOutput, `${thisHash};${rawData.fileName}`, thisHash, rawData.fileName);
 					return;
 				}
 
@@ -196,15 +186,32 @@
 				const {evaluationData} = evaluator.run();
 
 				// Output text
-				evaluationOutput += getSeparator(i, j) + evaluationData.map(data => data[1]).join(';');
-				hashOutput += getSeparator(i, j) + thisHash + '\n';
+				writeOutput(
+					evaluationOutput,
+					[...evaluationData.map(data => data[1]), thisHash, rawData.fileName].join(';'),
+					thisHash,
+					rawData.fileName,
+				)!;
+
+				// Output svg
+				const {maxX, minX, maxY, minY} = evaluator.getBoundaries();
+				const padding = drawSettings.nodePadding ?? 20;
+
+				const svgText =
+					`<svg viewBox="${minX - padding}, ${minY - padding}, ${maxX - minX + 2 * padding}, ${
+						maxY - minY + 2 * padding
+					}" style="background-color: white" xmlns="http://www.w3.org/2000/svg">` +
+					`<rect x="${minX - padding - 1}" y="${minY - padding - 1}" width="${
+						maxX - minX + 2 * padding + 2
+					}" height="${maxY - minY + 2 * padding + 2}" fill="white" />` +
+					canvas.innerHTML +
+					'</svg>';
+				writeOutput(svgOutput, svgText, thisHash, rawData.fileName);
 
 				// Cleanup
 				canvas.remove();
 			});
 		});
-
-		// Runtime: 1,5 second per item
 
 		doneOutput = 'Done';
 	}
@@ -242,12 +249,12 @@
 <div>
 	<Heading>Console</Heading>
 	<p id="debug-output" class="font-mono whitespace-pre">{@html debugOutput}</p>
-	<p id="settings-output" class="font-mono whitespace-pre">{@html settingsOutput}</p>
-	<p id="evaluation-output" class="font-mono whitespace-pre">{@html evaluationOutput}</p>
-	<p id="failed-output" class="font-mono whitespace-pre">{@html failedOutput}</p>
-	<p id="hash-output" class="font-mono whitespace-pre">{@html hashOutput}</p>
+	<p id="settings-output" class="font-mono whitespace-pre" bind:this={settingsOutput} />
+	<p id="evaluation-output" class="font-mono whitespace-pre" bind:this={evaluationOutput} />
+	<p id="failed-output" class="font-mono whitespace-pre" bind:this={failedOutput} />
+	<p id="hash-output" class="font-mono whitespace-pre" bind:this={hashOutput} />
+	<p id="svg-output" class="font-mono whitespace-pre" bind:this={svgOutput} />
 	<p id="done-output" class="font-mono whitespace-pre">{@html doneOutput}</p>
 </div>
 
-<!-- Dummy node for rendering canvasses. Should be unnecessary -->
 <div style="display: none" bind:this={canvasContainer} />
