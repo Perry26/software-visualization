@@ -1,7 +1,7 @@
 import type {DrawSettingsInterface} from '$types';
 import {readdirSync, readFileSync, writeFileSync} from 'fs';
 //import {readFileSync, readdirSync, writeFileSync} from 'fs';
-import data from './data.txt?raw';
+//import data from './data.txt?raw';
 
 const localMode = true;
 const serverMode = false;
