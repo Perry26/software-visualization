@@ -1,6 +1,7 @@
 import unzip from 'lodash/unzip';
 import {type Identifier, type ServerDataType} from './types';
 import zip from 'lodash/zip';
+import * as d3 from 'd3';
 
 type TransformedData = {
 	transformedData: number[][];
@@ -77,17 +78,43 @@ export function transformData(data: ServerDataType): TransformedData & {fileName
 	return {transformedData: dataGroups, identifiers, fileNames};
 }
 
+export function normalizeData(
+	dataGroups: number[][],
+	identifiers: Identifier[],
+	fileNames: Set<string>,
+) {
+	// In the transformation step, data is transformed such that lower numbers are always better
+	// Now, we're trying normalize datapoints with respect to their dataset.
+	const scales: {[f: string]: {[i: number]: d3.ScaleLinear<number, number, never>}} = {};
+	[...fileNames].forEach(f => {
+		scales[f] = {};
+		dataGroups.forEach((_, i) => {
+			const data = dataGroups[i].filter((_, i) => identifiers[i].fileName === f);
+			scales[f][i] = d3.scaleLinear([d3.quantile(data, 0.25)!, d3.quantile(data, 0.75)!], [0, 1]);
+		});
+	});
+
+	// Now, apply that to every datapoint
+	return dataGroups.map((vector, index) => {
+		return vector.map(n => {
+			const fileName = identifiers[index].fileName;
+			return scales[fileName][index](n);
+		});
+	});
+}
+
 export function filterIndexes(
 	amount: number | null,
 	topNFiles: Set<string>,
 	filterFiles: Set<string>,
 	dataGroups: number[][],
 	identifiers: Identifier[],
-): TransformedData {
+): TransformedData & {countFile: {[fileName: string]: number}} {
 	if (amount === null || amount === undefined) {
 		return {
 			transformedData: dataGroups,
 			identifiers,
+			countFile: {},
 		};
 	}
 
@@ -116,7 +143,7 @@ export function filterIndexes(
 		intersectionIndexes = intersectionIndexes.intersection(new Set<number>(vector));
 	});
 
-	// Not done yet, because we do want to pass on all datapoints related to a settings has
+	// Not done yet, because we do want to pass on all datapoints related to a settings hash
 	const hashes = new Set([...intersectionIndexes].map(i => identifiers[i].hash));
 	const indexesToKeep = new Set(
 		identifiers.flatMap(({fileName, hash}, index) =>
@@ -124,10 +151,18 @@ export function filterIndexes(
 		),
 	);
 
+	//console.log([...intersectionIndexes].map(i => identifiers[i].fileName));
+	// Finally, calculate some stats
+	const countFile: {[fileName: string]: number} = {};
+	filterFiles.forEach(f => {
+		countFile[f] = [...intersectionIndexes].filter(i => identifiers[i].fileName === f).length;
+	});
+
 	return {
 		transformedData: dataGroups.map(vector =>
 			vector.filter((_, index) => indexesToKeep.has(index)),
 		),
 		identifiers: identifiers.filter((_, index) => indexesToKeep.has(index)),
+		countFile,
 	};
 }

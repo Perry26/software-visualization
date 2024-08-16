@@ -2,7 +2,7 @@
 	import Heading from '$ui/heading.svelte';
 	import {onMount} from 'svelte';
 	import {DotType} from './types.js';
-	import {filterIndexes, transformData} from './transform-data.js';
+	import {filterIndexes, normalizeData, transformData} from './transform-data.js';
 	import {hslFn, scatterPlot} from './draw.js';
 
 	export let data;
@@ -15,7 +15,9 @@
 	let filterFiles: Set<string> = new Set();
 	let rerender: () => void;
 
-	let dataPointCount: number; // (Just so we can log this to the ui)
+	// (Just so we can log this to the ui)
+	let dataPointCount: number;
+	let topNData: {[fileName: string]: number} = {};
 
 	const radioButtons: [string, [string, DotType][]][] = [
 		[
@@ -58,6 +60,12 @@
 		indexFilterFiles = new Set(fileNames);
 		filterFiles = new Set(fileNames);
 
+		transformed1.transformedData = normalizeData(
+			transformed1.transformedData,
+			transformed1.identifiers,
+			fileNames,
+		);
+
 		return () => {
 			const transformed2 = filterIndexes(
 				indexFilterCutOff,
@@ -68,6 +76,7 @@
 			);
 
 			dataPointCount = transformed2.transformedData[0].length;
+			topNData = transformed2.countFile;
 
 			scatterPlot(
 				transformed2.transformedData,
@@ -160,7 +169,13 @@
 							}
 							rerender();
 						}}
-					/> <label for="{fn}-filter">{fn}</label>
+					/>
+					<label for="{fn}-filter"
+						>{fn}
+						{#if topNData[fn]}
+							({topNData[fn]})
+						{/if}
+					</label>
 				</div>
 			{/each}
 		</div>
