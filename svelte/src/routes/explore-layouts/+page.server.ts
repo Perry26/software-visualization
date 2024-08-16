@@ -1,9 +1,10 @@
 import type {DrawSettingsInterface} from '$types';
+import {readdirSync, readFileSync, writeFileSync} from 'fs';
 //import {readFileSync, readdirSync, writeFileSync} from 'fs';
 import data from './data.txt?raw';
 
-const localMode = false;
-const serverMode = true;
+const localMode = true;
+const serverMode = false;
 const writeMode = false;
 
 export function load(_): {
@@ -14,20 +15,21 @@ export function load(_): {
 	};
 } {
 	if (localMode) {
-		/*
 		const string = readFileSync('../python/output-data/evaluationResults.csv').toString();
 		// Parse the csv-data.
 		// While we're at it, we also convert stuff to a number if possible
 		const evaluationResults = string
 			.split('\n')
-			.map(s => s.split(';').map((s, i) => (i < 10 ? Number(s) : s)));
+			.map(s => s.split(';').map((s, i) => (i < 9 ? Number(s) : s)));
+		evaluationResults.shift(); // Take out header row
 
 		// Now the JSON data
 		const jsonObject: {[hash: string]: DrawSettingsInterface} = {};
 		readdirSync('../python/output-data/json').forEach(f => {
 			const hash = f.replace('.json', '');
 			const t = readFileSync('../python/output-data/json/' + f).toString();
-			const obj = JSON.parse(t.split(';')[0]);
+			//const obj = JSON.parse(t.split(';')[0]);
+			const obj = JSON.parse(t);
 			jsonObject[hash] = obj;
 		});
 
@@ -49,7 +51,6 @@ export function load(_): {
 		}
 
 		return result;
-		*/
 	} else if (serverMode) {
 		return JSON.parse(data);
 	}

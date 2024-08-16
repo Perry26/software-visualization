@@ -24,3 +24,5 @@ export interface ServerDataType {
 export type JsonDataType = {
 	[hash: string]: DrawSettingsInterface;
 };
+
+export type Identifier = {fileName: string; hash: string};

@@ -2,7 +2,7 @@
 import {type LayoutOptions, type LayoutNestingLevels, type DrawSettingsInterface} from '$types';
 import * as d3 from 'd3';
 import zip from 'lodash/zip';
-import {DotType, type JsonDataType} from './types';
+import {DotType, type Identifier, type JsonDataType} from './types';
 
 /** Global constants representing canvas width and height (can safely be changed here) */
 const width = 500,
@@ -109,8 +109,8 @@ function useColorMap(
  * Resulting function is to be used as an event callback with the proper d3-data associated.
  */
 function sidebarGenerator(jsonData: JsonDataType) {
-	return function (_: unknown, data: [number, number, string]) {
-		const hash = data[2];
+	return function (_: unknown, data: [number, number, Identifier]) {
+		const hash = data[2].hash;
 		const jsonDataThis = jsonData[hash];
 
 		let text = `<p><strong>Datapoint:</strong> ${hash}</p>
@@ -172,13 +172,13 @@ function sidebarGenerator(jsonData: JsonDataType) {
 
 export function scatterPlot(
 	data: number[][],
-	hashes: string[],
+	identifiers: Identifier[],
 	indexX: number,
 	indexY: number,
 	dotType: DotType,
 	jsonData: JsonDataType,
 ) {
-	const points = zip(data[indexX], data[indexY], hashes) as [number, number, string][];
+	const points = zip(data[indexX], data[indexY], identifiers) as [number, number, Identifier][];
 
 	// Create scales
 	const scaleX = d3.scaleLinear(
@@ -205,14 +205,14 @@ export function scatterPlot(
 
 	// Helper function to generate the datapoints (depending on the dotType)
 	function drawCircle(
-		selection: d3.Selection<SVGGElement, [number, number, string], d3.BaseType, unknown>,
+		selection: d3.Selection<SVGGElement, [number, number, Identifier], d3.BaseType, unknown>,
 		level: LayoutNestingLevels,
 		dotType?: DotType,
 	) {
 		selection
 			.append('circle')
 			.attr('fill', d => {
-				const hash = d[2];
+				const hash = d[2].hash;
 				return useColorMap(jsonData[hash], level, dotType);
 			})
 			.attr('fill-opacity', 1)
@@ -224,7 +224,7 @@ export function scatterPlot(
 	}
 
 	function drawFlag(
-		selection: d3.Selection<SVGGElement, [number, number, string], d3.BaseType, unknown>,
+		selection: d3.Selection<SVGGElement, [number, number, Identifier], d3.BaseType, unknown>,
 		level: LayoutNestingLevels,
 	) {
 		const offsetX =
@@ -237,7 +237,7 @@ export function scatterPlot(
 		selection
 			.append('rect')
 			.attr('fill', d => {
-				const hash = d[2];
+				const hash = d[2].hash;
 				return useColorMap(jsonData[hash], level);
 			})
 			.attr('fill-opacity', 1)

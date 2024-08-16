@@ -8,8 +8,14 @@
 	export let data;
 	let indexX: number = 0;
 	let indexY: number = 1;
-	let indexFilterCutOff: number | null = 4000;
+	let indexFilterCutOff: number | null = 11000;
+	let indexFilterFiles: Set<string> = new Set();
 	let dotType: DotType = DotType.Flag;
+	let fileNames: Set<string> = new Set();
+	let filterFiles: Set<string> = new Set();
+	let rerender: () => void;
+
+	let dataPointCount: number; // (Just so we can log this to the ui)
 
 	const radioButtons: [string, [string, DotType][]][] = [
 		[
@@ -46,25 +52,36 @@
 		// ['Forces', [['Forces', DotType.Forces]]],
 	];
 
-	function rerender() {
+	function render() {
 		const transformed1 = transformData(data);
-		const transformed2 = filterIndexes(
-			indexFilterCutOff,
-			transformed1.transformedData,
-			transformed1.hashes,
-		);
+		fileNames = transformed1.fileNames;
+		indexFilterFiles = new Set(fileNames);
+		filterFiles = new Set(fileNames);
 
-		scatterPlot(
-			transformed2.transformedData,
-			transformed2.hashes,
-			indexX,
-			indexY,
-			dotType,
-			data.jsonData,
-		);
+		return () => {
+			const transformed2 = filterIndexes(
+				indexFilterCutOff,
+				indexFilterFiles,
+				filterFiles,
+				transformed1.transformedData,
+				transformed1.identifiers,
+			);
+
+			dataPointCount = transformed2.transformedData[0].length;
+
+			scatterPlot(
+				transformed2.transformedData,
+				transformed2.identifiers,
+				indexX,
+				indexY,
+				dotType,
+				data.jsonData,
+			);
+		};
 	}
 
 	onMount(() => {
+		rerender = render();
 		rerender();
 	});
 </script>
@@ -89,6 +106,9 @@
 					<option value={i}>{header}</option>
 				{/each}
 			</select>
+			<p class="text-right w-full">
+				Loaded {data.evaluationResults.length} datapoints
+			</p>
 		</div>
 		<div class="flex flex-col items-center">
 			<label
@@ -107,6 +127,9 @@
 					<option value={i}>{header}</option>
 				{/each}
 			</select>
+			{#if dataPointCount !== undefined}
+				<p class="text-left w-full ml-3">({dataPointCount} left after filtering)</p>
+			{/if}
 		</div>
 		<div class="flex flex-col items-center">
 			<label
@@ -122,6 +145,47 @@
 				bind:value={indexFilterCutOff}
 				on:change={rerender}
 			/>
+			{#each fileNames as fn}
+				<div>
+					<input
+						id="{fn}-filter"
+						type="checkbox"
+						checked={indexFilterFiles.has(fn)}
+						on:change={e => {
+							//@ts-ignore
+							if (e.target.checked) {
+								indexFilterFiles.add(fn);
+							} else {
+								indexFilterFiles.delete(fn);
+							}
+							rerender();
+						}}
+					/> <label for="{fn}-filter">{fn}</label>
+				</div>
+			{/each}
+		</div>
+		<div class="flex flex-col items-center">
+			<p class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+				Show only datapoints from file
+			</p>
+			{#each fileNames as fn}
+				<div>
+					<input
+						id="{fn}-filter2"
+						type="checkbox"
+						checked={filterFiles.has(fn)}
+						on:change={e => {
+							//@ts-ignore
+							if (e.target.checked) {
+								filterFiles.add(fn);
+							} else {
+								filterFiles.delete(fn);
+							}
+							rerender();
+						}}
+					/> <label for="{fn}-filter2">{fn}</label>
+				</div>
+			{/each}
 		</div>
 		<div class="flex flex-col items-start mr-5 ml-5">
 			<div class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
@@ -166,7 +230,7 @@
 			{/if}
 			{#if [DotType.NodeSize, DotType.NodePadding, DotType.NodeMarginRoot, DotType.NodeMarginIntermediate, DotType.NodeMarginLeaf].includes(dotType)}
 				<div class="flex flex-row">
-					{#each [[0, 5, 10, 15, 20], [25, 30, 35, 40, 45], [50, 55, 60, 65, 70], [75, 80, 85, 90, 95], [100]] as ns}
+					{#each [[0, 10, 20], [30, 40, 50]] as ns}
 						<div class="flex flex-col mr-5">
 							{#each ns as n}
 								<div style="color: {hslFn(n)}">{n} px</div>
