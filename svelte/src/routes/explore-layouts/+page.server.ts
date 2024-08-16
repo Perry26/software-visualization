@@ -1,10 +1,9 @@
 import type {DrawSettingsInterface} from '$types';
-import {readdirSync, readFileSync, writeFileSync} from 'fs';
 //import {readFileSync, readdirSync, writeFileSync} from 'fs';
-//import data from './data.txt?raw';
+import data from './data.txt?raw';
 
-const localMode = true;
-const serverMode = false;
+const localMode = false;
+const serverMode = true;
 const writeMode = false;
 
 export function load(_): {
@@ -15,6 +14,7 @@ export function load(_): {
 	};
 } {
 	if (localMode) {
+		/*
 		const string = readFileSync('../python/output-data/evaluationResults.csv').toString();
 		// Parse the csv-data.
 		// While we're at it, we also convert stuff to a number if possible
@@ -51,6 +51,7 @@ export function load(_): {
 		}
 
 		return result;
+		*/
 	} else if (serverMode) {
 		return JSON.parse(data);
 	}
