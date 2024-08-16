@@ -2,8 +2,13 @@
 	import Heading from '$ui/heading.svelte';
 	import {onMount} from 'svelte';
 	import {DotType} from './types.js';
-	import {filterIndexes, normalizeData, transformData} from './transform-data.js';
+	import {filterIndexes, filterLayouts, normalizeData, transformData} from './transform-data.js';
 	import {hslFn, scatterPlot} from './draw.js';
+	import {type LayoutNestingLevels, type LayoutOptions} from '$types';
+
+	// Global constants
+	const layoutAlgorithms: LayoutOptions[] = ['layerTree', 'circular', 'forceBased'];
+	const nestingLevels: LayoutNestingLevels[] = ['inner', 'intermediate', 'root'];
 
 	export let data;
 	let indexX: number = 0;
@@ -14,6 +19,7 @@
 	let fileNames: Set<string> = new Set();
 	let filterFiles: Set<string> = new Set();
 	let rerender: () => void;
+	let layoutFilter: Map<LayoutNestingLevels, Map<LayoutOptions, boolean>> = new Map();
 
 	// (Just so we can log this to the ui)
 	let dataPointCount: number;
@@ -78,9 +84,16 @@
 			dataPointCount = transformed2.transformedData[0].length;
 			topNData = transformed2.countFile;
 
-			scatterPlot(
+			const transformed3 = filterLayouts(
+				layoutFilter,
 				transformed2.transformedData,
 				transformed2.identifiers,
+				data.jsonData,
+			);
+
+			scatterPlot(
+				transformed3.transformedData,
+				transformed3.identifiers,
 				indexX,
 				indexY,
 				dotType,
@@ -89,7 +102,16 @@
 		};
 	}
 
+	// Initialize layoutFilter map
+	nestingLevels.forEach(level => {
+		layoutFilter.set(level, new Map());
+		layoutAlgorithms.forEach(algo => {
+			layoutFilter.get(level)!.set(algo, true);
+		});
+	});
+
 	onMount(() => {
+		// Now render all data, etc.
 		rerender = render();
 		rerender();
 	});
@@ -97,7 +119,7 @@
 
 <div class="p-6 h-full w-full overflow-hidden">
 	<Heading>Explore layout evaluations</Heading>
-	<div class="flex flex-row items-start">
+	<div class="flex flex-row items-start overflow-x-auto text-nowrap">
 		<div class="flex flex-col items-center">
 			<label
 				for="x-select-val"
@@ -154,6 +176,11 @@
 				bind:value={indexFilterCutOff}
 				on:change={rerender}
 			/>
+		</div>
+		<div class="flex flex-col ml-5 mr-5">
+			<p class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+				Use these files for filtering top n
+			</p>
 			{#each fileNames as fn}
 				<div>
 					<input
@@ -232,7 +259,32 @@
 				{/each}
 			</div>
 		</div>
-		<div class="w-500 ml-5">
+		<div class="flex flex-col ml-5">
+			<p class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Filter by layout</p>
+			<div class="flex flex-row">
+				{#each nestingLevels.toReversed() as level}
+					<div class="flex flex-col mr-5">
+						<p class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">{level}</p>
+						{#each layoutAlgorithms as layout}
+							<div class="flex flex-row">
+								<input
+									type="checkbox"
+									id="{level}-{layout}-filter"
+									checked={layoutFilter.get(level)?.get(layout)}
+									on:change={e => {
+										//@ts-ignore
+										layoutFilter.get(level)?.set(layout, e.target.checked);
+										rerender();
+									}}
+								/>
+								<label class="ml-1" for="{level}-{layout}-filter">{layout}</label>
+							</div>
+						{/each}
+					</div>
+				{/each}
+			</div>
+		</div>
+		<div class="w-500">
 			<div class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Legend:</div>
 			{#if [DotType.Flag, DotType.NestedCircles, DotType.OnlyRoot, DotType.OnlyIntermediate, DotType.OnlyLeaf].includes(dotType)}
 				<div style="color: #4682B4">LayerTree</div>

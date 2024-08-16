@@ -1,7 +1,8 @@
 import unzip from 'lodash/unzip';
-import {type Identifier, type ServerDataType} from './types';
+import {type JsonDataType, type Identifier, type ServerDataType} from './types';
 import zip from 'lodash/zip';
 import * as d3 from 'd3';
+import {type LayoutNestingLevels, type LayoutOptions} from '$types';
 
 type TransformedData = {
 	transformedData: number[][];
@@ -164,5 +165,30 @@ export function filterIndexes(
 		),
 		identifiers: identifiers.filter((_, index) => indexesToKeep.has(index)),
 		countFile,
+	};
+}
+
+// Filter by layout algorithm used
+export function filterLayouts(
+	layoutFilter: Map<LayoutNestingLevels, Map<LayoutOptions, boolean>>,
+	dataGroups: number[][],
+	identifiers: Identifier[],
+	jsonData: JsonDataType,
+): TransformedData {
+	const filteredIndexes = new Set(
+		identifiers.flatMap(({hash}, index) => {
+			const drawSettings = jsonData[hash];
+			return (['inner', 'intermediate', 'root'] as LayoutNestingLevels[]).every(level => {
+				const layout = drawSettings[`${level}Layout`];
+				return layoutFilter.get(level)!.get(layout);
+			})
+				? [index]
+				: [];
+		}),
+	);
+
+	return {
+		transformedData: dataGroups.map(vector => vector.filter((_, i) => filteredIndexes.has(i))),
+		identifiers: identifiers.filter((_, i) => filteredIndexes.has(i)),
 	};
 }
