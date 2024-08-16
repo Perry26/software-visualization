@@ -111,6 +111,7 @@ function useColorMap(
 function sidebarGenerator(jsonData: JsonDataType) {
 	return function (_: unknown, data: [number, number, Identifier]) {
 		const hash = data[2].hash;
+		const svgFileName = `${hash}-${data[2].fileName}`;
 		const jsonDataThis = jsonData[hash];
 
 		let text = `<p><strong>Datapoint:</strong> ${hash}</p>
@@ -153,7 +154,7 @@ function sidebarGenerator(jsonData: JsonDataType) {
 		d3.select('#tooltip-div').html(text);
 
 		// All image as svg
-		fetch(`/svg/${hash}.svg`).then(response => {
+		fetch(`/svg/${svgFileName}.svg`).then(response => {
 			response.text().then(s => {
 				document.getElementById('svg-container')!.innerHTML = s;
 				const svg = document.getElementById('svg-container')!.children[0];
