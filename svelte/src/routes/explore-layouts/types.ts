@@ -1,4 +1,4 @@
-import {type DrawSettingsInterface} from '$types';
+import {type LayoutNestingLevels, type LayoutOptions, type DrawSettingsInterface} from '$types';
 
 export enum DotType {
 	Flag,
@@ -26,3 +26,5 @@ export type JsonDataType = {
 };
 
 export type Identifier = {fileName: string; hash: string};
+
+export type countLayoutType = {[level in LayoutNestingLevels]?: {[algo in LayoutOptions]?: number}};

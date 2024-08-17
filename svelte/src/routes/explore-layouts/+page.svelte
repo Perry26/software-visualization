@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Heading from '$ui/heading.svelte';
 	import {onMount} from 'svelte';
-	import {DotType} from './types.js';
+	import {type countLayoutType, DotType} from './types.js';
 	import {filterIndexes, filterLayouts, normalizeData, transformData} from './transform-data.js';
 	import {hslFn, scatterPlot} from './draw.js';
 	import {type LayoutNestingLevels, type LayoutOptions} from '$types';
@@ -20,6 +20,7 @@
 	let filterFiles: Set<string> = new Set();
 	let rerender: () => void;
 	let layoutFilter: Map<LayoutNestingLevels, Map<LayoutOptions, boolean>> = new Map();
+	let countLayout: countLayoutType;
 
 	// (Just so we can log this to the ui)
 	let dataPointCount: number;
@@ -90,6 +91,7 @@
 				transformed2.identifiers,
 				data.jsonData,
 			);
+			countLayout = transformed3.countLayout;
 
 			scatterPlot(
 				transformed3.transformedData,
@@ -262,7 +264,7 @@
 		<div class="flex flex-col ml-5">
 			<p class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Filter by layout</p>
 			<div class="flex flex-row">
-				{#each nestingLevels.toReversed() as level}
+				{#each nestingLevels.slice().reverse() as level}
 					<div class="flex flex-col mr-5">
 						<p class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">{level}</p>
 						{#each layoutAlgorithms as layout}
@@ -277,7 +279,12 @@
 										rerender();
 									}}
 								/>
-								<label class="ml-1" for="{level}-{layout}-filter">{layout}</label>
+								<label class="ml-1" for="{level}-{layout}-filter"
+									>{layout}
+									{#if countLayout?.[level]?.[layout]}
+										({countLayout[level][layout]})
+									{/if}</label
+								>
 							</div>
 						{/each}
 					</div>

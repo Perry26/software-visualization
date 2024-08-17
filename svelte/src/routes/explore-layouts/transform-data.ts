@@ -1,8 +1,16 @@
 import unzip from 'lodash/unzip';
-import {type JsonDataType, type Identifier, type ServerDataType} from './types';
+import {
+	type JsonDataType,
+	type Identifier,
+	type ServerDataType,
+	type countLayoutType,
+} from './types';
 import zip from 'lodash/zip';
 import * as d3 from 'd3';
 import {type LayoutNestingLevels, type LayoutOptions} from '$types';
+
+const layoutAlgorithms: LayoutOptions[] = ['layerTree', 'circular', 'forceBased'];
+const nestingLevels: LayoutNestingLevels[] = ['inner', 'intermediate', 'root'];
 
 type TransformedData = {
 	transformedData: number[][];
@@ -174,7 +182,7 @@ export function filterLayouts(
 	dataGroups: number[][],
 	identifiers: Identifier[],
 	jsonData: JsonDataType,
-): TransformedData {
+): TransformedData & {countLayout: countLayoutType} {
 	const filteredIndexes = new Set(
 		identifiers.flatMap(({hash}, index) => {
 			const drawSettings = jsonData[hash];
@@ -187,8 +195,20 @@ export function filterLayouts(
 		}),
 	);
 
+	// Get some debug info
+	const countLayout: countLayoutType = {} as never;
+	nestingLevels.forEach(level => {
+		countLayout[level] = {} as never;
+		layoutAlgorithms.forEach(algo => {
+			countLayout[level]![algo] = [...filteredIndexes].filter(
+				i => jsonData[identifiers[i].hash][`${level}Layout`] === algo,
+			).length;
+		});
+	});
+
 	return {
 		transformedData: dataGroups.map(vector => vector.filter((_, i) => filteredIndexes.has(i))),
 		identifiers: identifiers.filter((_, i) => filteredIndexes.has(i)),
+		countLayout,
 	};
 }
