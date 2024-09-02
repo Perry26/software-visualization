@@ -18,7 +18,7 @@ type TransformedData = {
 };
 
 // Warning: NOTHING GUARANTEES THIS IS THE SAME AS THE HEADER
-enum Indexes {
+enum newIndexes {
 	nodeOverlaps,
 	nodeOrthogonality,
 	nodeDensity,
@@ -30,38 +30,89 @@ enum Indexes {
 	unrelatedOverlaps,
 }
 
-// Global constants to store how data should be scaled
-const indexesToScaleLinear = [
-	Indexes.nodeOverlaps,
-	Indexes.nodeDensity,
-	Indexes.area,
-	Indexes.lineIntersections,
-	Indexes.lengthDifference,
-	Indexes.unrelatedOverlaps,
-];
-const indexesToScaleInverse = [Indexes.nodeOrthogonality, Indexes.radialDistance];
-const indexesCloseToOne = [Indexes.aspectRatio];
-const indexesToIgnore: Indexes[] = [];
+enum oldIndexes {
+	nodeOverlaps,
+	nodeOrthogonality,
+	area,
+	aspectRatio,
+	lineIntersections,
+	fullOverlaps,
+	lineBends,
+	lengthDifference,
+	radialDistance,
+	unrelatedOverlaps,
+}
+
+function getScalingConstants(oldData?: boolean) {
+	if (oldData === true) {
+		console.log({oldData});
+		return {
+			indexesToScaleLinear: [
+				oldIndexes.nodeOverlaps,
+				oldIndexes.area,
+				oldIndexes.lineIntersections,
+				oldIndexes.lengthDifference,
+				oldIndexes.unrelatedOverlaps,
+				oldIndexes.fullOverlaps,
+			],
+			indexesToScaleInverse: [oldIndexes.nodeOrthogonality, oldIndexes.radialDistance],
+			indexesCloseToOne: [oldIndexes.aspectRatio],
+			indexesToIgnore: [oldIndexes.lineBends],
+		};
+	} else {
+		return {
+			indexesToScaleLinear: [
+				newIndexes.nodeOverlaps,
+				newIndexes.nodeDensity,
+				newIndexes.area,
+				newIndexes.lineIntersections,
+				newIndexes.lengthDifference,
+				newIndexes.unrelatedOverlaps,
+			],
+			indexesToScaleInverse: [newIndexes.nodeOrthogonality, newIndexes.radialDistance],
+			indexesCloseToOne: [newIndexes.aspectRatio],
+			indexesToIgnore: [],
+		};
+	}
+}
+let indexesToScaleLinear: number[] = [];
+let indexesToScaleInverse: number[] = [];
+let indexesCloseToOne: number[] = [];
+let indexesToIgnore: number[] = [];
 
 export function transformData(data: ServerDataType): TransformedData & {fileNames: Set<string>} {
 	// Validate:
 	// Check if constants aren't malformed
-	if (
-		indexesToScaleLinear.length +
-			indexesToScaleInverse.length +
-			indexesCloseToOne.length +
-			indexesToIgnore.length !==
-		data.header.length - 2
-	) {
-		console.error('Invalid constants');
-	}
+	// if (
+	// 	indexesToScaleLinear.length +
+	// 		indexesToScaleInverse.length +
+	// 		indexesCloseToOne.length +
+	// 		indexesToIgnore.length !==
+	// 	data.header.length - 2
+	// ) {
+	// 	console.error('Invalid constants');
+	// }
+	const tmp = getScalingConstants(data.oldData);
+	indexesToScaleLinear = tmp.indexesToScaleLinear;
+	indexesToScaleInverse = tmp.indexesToScaleInverse;
+	indexesCloseToOne = tmp.indexesCloseToOne;
+	indexesToIgnore = tmp.indexesToIgnore;
 
 	// Convert data to always make minimization the preference
 	const dataGroups = unzip(data.evaluationResults) as unknown as number[][];
-	const identifiers = zip(dataGroups.pop(), dataGroups.pop()).map(([f, h]) => ({
-		fileName: f as unknown as string,
-		hash: h as unknown as string,
-	}));
+	console.log(data.header);
+	let identifiers: Identifier[];
+	if (data.oldData === true) {
+		identifiers = dataGroups.pop()!.map(h => ({
+			fileName: 'jhotdraw-trc-sum-rs.json',
+			hash: h as unknown as string,
+		}));
+	} else {
+		identifiers = zip(dataGroups.pop(), dataGroups.pop()).map(([f, h]) => ({
+			fileName: f as unknown as string,
+			hash: h as unknown as string,
+		}));
+	}
 
 	indexesToScaleLinear.forEach(index => {
 		const data = dataGroups[index];

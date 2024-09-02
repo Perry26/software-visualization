@@ -19,6 +19,7 @@ export interface ServerDataType {
 	evaluationResults: (number | string)[][];
 	header: string[];
 	jsonData: JsonDataType;
+	oldData?: boolean;
 }
 
 export type JsonDataType = {

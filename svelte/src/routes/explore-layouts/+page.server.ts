@@ -1,17 +1,19 @@
 import type {DrawSettingsInterface} from '$types';
 //import {readFileSync, readdirSync, writeFileSync} from 'fs';
 import data from './data.txt?raw';
+import old_data from './old_data.txt?raw';
 
 const localMode = false;
 const serverMode = true;
 const writeMode = false;
 
-export function load(_): {
+export function load(loadEvent): {
 	evaluationResults: (number | string)[][];
 	header: string[];
 	jsonData: {
 		[hash: string]: DrawSettingsInterface;
 	};
+	oldData?: boolean;
 } {
 	if (localMode) {
 		/*
@@ -53,7 +55,11 @@ export function load(_): {
 		return result;
 		*/
 	} else if (serverMode) {
-		return JSON.parse(data);
+		if (loadEvent.url.searchParams.has('oldData')) {
+			return {...JSON.parse(old_data), oldData: true};
+		} else {
+			return JSON.parse(data);
+		}
 	}
 	throw new Error();
 }

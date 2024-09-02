@@ -108,7 +108,7 @@ function useColorMap(
  * Builds a function to populate the sidebars
  * Resulting function is to be used as an event callback with the proper d3-data associated.
  */
-function sidebarGenerator(jsonData: JsonDataType) {
+function sidebarGenerator(jsonData: JsonDataType, oldData?: boolean) {
 	return function (_: unknown, data: [number, number, Identifier]) {
 		const hash = data[2].hash;
 		const svgFileName = `${hash}-${data[2].fileName}`;
@@ -154,7 +154,7 @@ function sidebarGenerator(jsonData: JsonDataType) {
 		d3.select('#tooltip-div').html(text);
 
 		// All image as svg
-		fetch(`/svg/${svgFileName}.svg`).then(response => {
+		fetch(`/svg/${oldData ? 'old/' : ''}${svgFileName}.svg`).then(response => {
 			response.text().then(s => {
 				document.getElementById('svg-container')!.innerHTML = s;
 				const svg = document.getElementById('svg-container')!.children[0];
@@ -178,6 +178,7 @@ export function scatterPlot(
 	indexY: number,
 	dotType: DotType,
 	jsonData: JsonDataType,
+	oldData?: boolean,
 ) {
 	const points = zip(data[indexX], data[indexY], identifiers) as [number, number, Identifier][];
 
@@ -220,7 +221,7 @@ export function scatterPlot(
 			.attr('r', levelMapCircle[level])
 			.attr('cx', d => scaleX(d[0]))
 			.attr('cy', d => scaleY(d[1]))
-			.on('click', sidebarGenerator(jsonData))
+			.on('click', sidebarGenerator(jsonData, oldData))
 			.attr('class', `${level}-dot`);
 	}
 

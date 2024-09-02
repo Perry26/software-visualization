@@ -100,6 +100,7 @@
 				indexY,
 				dotType,
 				data.jsonData,
+				data.oldData,
 			);
 		};
 	}
