@@ -121,6 +121,14 @@
 				doRefilter = false;
 				doRelayout = true;
 				maximumDepth = graphData.maximumDepth;
+
+				console.log({
+					file: rawData.fileName,
+					classes: graphData.flattenNodes.filter(n => n.members.length === 0),
+					packages: graphData.flattenNodes.filter(n => n.members.length !== 0),
+					topLevelPackages: graphData.nodes.filter(n => n.members.length === 0).length,
+					edges: graphData.links.length,
+				});
 			}
 
 			if (doRelayout) {
