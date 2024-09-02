@@ -102,6 +102,7 @@ export function filterIndexes(
 
 		intersectionIndexes = intersectionIndexes.intersection(new Set<number>(vector));
 	});
+	console.log({filtered: intersectionIndexes.length, datapoints: hashes.length});
 
 	return {
 		transformedData: dataGroups.map(vector =>
