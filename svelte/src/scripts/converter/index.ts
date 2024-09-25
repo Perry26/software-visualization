@@ -70,7 +70,7 @@ export function converter(rawData: RawInputType, config: RawDataConfigType): Con
 				source: data.source,
 				target: data.target,
 				type: label,
-				weight: data.properties.weight,
+				weight: data?.properties?.weight ?? 1,
 			};
 		});
 	// at this point, we have no use for rawData. we only play with links and nodesAsObject
