@@ -256,6 +256,13 @@ export function filterLayouts(
 			).length;
 		});
 	});
+	countLayout.edgePort = {true: 0, false: 0};
+	identifiers
+		.filter((_, index) => filteredIndexes.has(index))
+		.forEach(identifier => {
+			const data = jsonData[identifier.hash];
+			data.showEdgePorts ? countLayout.edgePort.true++ : countLayout.edgePort.false++;
+		});
 
 	return {
 		transformedData: dataGroups.map(vector => vector.filter((_, i) => filteredIndexes.has(i))),

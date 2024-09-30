@@ -2,15 +2,15 @@
 	import {onMount} from 'svelte';
 
 	import {debuggingConsole, extractAvailableEdgeType} from '$helper';
-	import type {
-		ConfigInterface,
-		ConvertedData,
-		DrawSettingsInterface,
+	import {
+		type ConfigInterface,
+		type ConvertedData,
+		type DrawSettingsInterface,
 		EdgeType,
-		GraphDataNode,
-		GraphData,
-		RawInputType,
-		RawDataConfigType,
+		type GraphDataNode,
+		type GraphData,
+		type RawInputType,
+		type RawDataConfigType,
 	} from '$types';
 
 	// scripts
@@ -27,6 +27,7 @@
 	import {SidePanelTab} from '$types/ui';
 	import {LayoutError} from '$scripts/draw';
 	import {makeDefaultDrawSettings} from '../default-objects';
+	import {hierarchy} from 'd3';
 
 	let sidePanelTab: SidePanelTab = SidePanelTab.Input;
 
@@ -127,7 +128,7 @@
 					classes: graphData.flattenNodes.filter(n => n.members.length === 0),
 					packages: graphData.flattenNodes.filter(n => n.members.length !== 0),
 					topLevelPackages: graphData.nodes.filter(n => n.members.length === 0).length,
-					edges: graphData.links.length,
+					edges: graphData.links.filter(l => l.type === EdgeType.calls),
 				});
 			}
 

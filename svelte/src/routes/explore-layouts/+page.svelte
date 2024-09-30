@@ -5,6 +5,7 @@
 	import {filterIndexes, filterLayouts, normalizeData, transformData} from './transform-data.js';
 	import {hslFn, scatterPlot} from './draw.js';
 	import {type LayoutNestingLevels, type LayoutOptions} from '$types';
+	import range from 'lodash/range.js';
 
 	// Global constants
 	const layoutAlgorithms: LayoutOptions[] = ['layerTree', 'circular', 'forceBased'];
@@ -19,6 +20,14 @@
 	let fileNames: Set<string> = new Set();
 	let filterFiles: Set<string> = new Set();
 	let rerender: () => void;
+	type tmpType = {
+		dataPointCount: number;
+		topNData: {
+			[fileName: string]: number;
+		};
+		countLayout: countLayoutType;
+	};
+	let tmp: (i: number) => tmpType;
 	let layoutFilter: Map<LayoutNestingLevels, Map<LayoutOptions, boolean>> = new Map();
 	let countLayout: countLayoutType;
 
@@ -72,6 +81,30 @@
 			transformed1.identifiers,
 			fileNames,
 		);
+
+		tmp = (i: number) => {
+			const transformed2 = filterIndexes(
+				i,
+				indexFilterFiles,
+				filterFiles,
+				transformed1.transformedData,
+				transformed1.identifiers,
+			);
+
+			let dataPointCount = transformed2.transformedData[0].length;
+			let topNData = transformed2.countFile;
+
+			const transformed3 = filterLayouts(
+				layoutFilter,
+				transformed2.transformedData,
+				transformed2.identifiers,
+				data.jsonData,
+			);
+			let countLayout = transformed3.countLayout;
+
+			const res = {dataPointCount, topNData, countLayout};
+			return res;
+		};
 
 		return () => {
 			const transformed2 = filterIndexes(
@@ -315,6 +348,30 @@
 				</div>
 			{/if}
 		</div>
+		<button
+			class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+			on:click={() => {
+				const str = range(5000, 11000, 10)
+					.map(i => {
+						return {res: tmp(i), i};
+					})
+					.map(
+						({res, i}) =>
+							//`${i}\t${res.topNData['JetUML-cls-output.json']}\t${res.topNData['k9mail-cls-output.json']}\t${res.topNData['jhotdraw-trc-sum-rs.json']}`,
+							//`${i}\t${res.countLayout.inner?.layerTree}\t${res.countLayout.inner?.circular}\t${res.countLayout.inner?.forceBased}`,
+							`${i}\t${res.countLayout.edgePort.true}\t${res.countLayout.edgePort.false}`,
+					)
+					.join('\n');
+				console.log(str);
+
+				// All: 10000, 23192, 50
+				// JetUML: 3000, 7000, 10
+				// K9: 3000, 7000, 10
+				// JHotDraw: 5000, 11000, 10
+			}}
+		>
+			Button
+		</button>
 	</div>
 	<div class="flex flex-row h-full">
 		<svg id="canvas" class="h-full w-2/5">

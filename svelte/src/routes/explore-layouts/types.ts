@@ -28,4 +28,11 @@ export type JsonDataType = {
 
 export type Identifier = {fileName: string; hash: string};
 
-export type countLayoutType = {[level in LayoutNestingLevels]?: {[algo in LayoutOptions]?: number}};
+export type countLayoutType = {
+	[level in LayoutNestingLevels]?: {[algo in LayoutOptions]?: number};
+} & {
+	edgePort: {
+		true: number;
+		false: number;
+	};
+};
