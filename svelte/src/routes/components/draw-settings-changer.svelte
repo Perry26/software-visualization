@@ -84,6 +84,21 @@
 		</Toggle>
 	</div>
 
+	<!-- Show Buttons -->
+	<div>
+		<Heading headingNumber={5}>Show Node Buttons</Heading>
+		<Toggle
+			class="ml-4"
+			onToggle={() => {
+				drawSettings.showNodeButtons = !drawSettings.showNodeButtons;
+				doRedraw = true;
+			}}
+			state={drawSettings.showNodeButtons}
+		>
+			{drawSettings.showNodeButtons ? 'Hide' : 'Show'}
+		</Toggle>
+	</div>
+
 	<!-- seperator -->
 	<div class="h-8" />
 

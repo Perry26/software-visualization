@@ -30,6 +30,7 @@ export interface DrawSettingsInterface extends drawSettingsInterfaceDummy {
 	shownEdgesType: Map<EdgeType, boolean>;
 	showNodeLabels: boolean;
 	showEdgeLabels: boolean;
+	showNodeButtons: boolean;
 	showEdgePorts: boolean;
 	colorFromBottom: boolean;
 	invertPortColors: boolean;

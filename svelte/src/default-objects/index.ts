@@ -14,6 +14,7 @@ const defaultDrawSettings: DrawSettingsInterface = {
 	shownEdgesType: new Map<EdgeType, boolean>(),
 	showEdgeLabels: false,
 	showNodeLabels: true,
+	showNodeButtons: true,
 	showEdgePorts: true,
 	colorFromBottom: true,
 	invertPortColors: false,

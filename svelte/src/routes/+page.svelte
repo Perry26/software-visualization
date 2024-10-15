@@ -76,6 +76,7 @@
 		} else {
 			config.collapsedNodes = config.collapsedNodes.filter(node => node !== clickedNode);
 		}
+		config.collapsedNodes = [...graphData.nodes];
 		// on finish
 		doRefilter = true;
 	}
